@@ -2,7 +2,7 @@ var activeTime;
 var toolsUsed;
 
 var request = new XMLHttpRequest()
-request.open('GET', 'http://localhost:5000/APIdata', true)
+request.open('GET', 'https://intense-lowlands-76055.herokuapp.com/APIdata', true)
 
 
 request.onload = function loadData() {
