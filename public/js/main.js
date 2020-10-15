@@ -1,7 +1,7 @@
 var activeTime;
 var toolsUsed;
 
-var url = 'https://intense-lowlands-76055.herokuapp.com'
+var url = 'https://persistence-addons.herokuapp.com'
 
 var request = new XMLHttpRequest()
 request.open('GET', url + '/APIdata', true)
