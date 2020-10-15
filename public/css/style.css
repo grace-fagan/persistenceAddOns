@@ -1,0 +1,116 @@
+body {
+  font-family: 'Bebas Neue', sans-serif;
+  background-color: #f7f7f7;
+  text-align: center;
+}
+
+h1 {
+  font-weight: 100;
+  margin-top: 10px;
+  font-style: bold;
+  font-size: 24px;
+}
+
+h2 {
+  font-weight: 200;
+  font-size: 16px;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+h3 {
+  font-weight: 100;
+  font-size: 14px;
+}
+
+#new_word {
+  margin-top: 10px;
+}
+
+#keyword {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+#title {
+  background-color: white;
+/*  border: 1px solid black;
+*/}
+
+/*#active_time {
+  border: 1px solid black;
+}
+
+#tools_used {
+  border: 1px solid red;
+}*/
+
+.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 100px;                  
+  height: 30px;                 
+  padding: 2px;             
+  font: 12px sans-serif;
+  font-family: "Roboto";
+  font-weight: bold;   
+  background: white; 
+  border: 1px solid black;
+ 
+}
+
+.barTooltip {
+  position: absolute;
+  text-align: center;
+  width: 300px;
+  height: 80px;
+  font: 14px sans-serif;
+  font-family: "Roboto";
+  background: white;
+  opacity: 100;
+  border: 1px solid black;
+}
+
+.container-fluid {
+	padding-right: 10px;
+	padding-left: 10px;
+}
+
+.col-md-4 {
+}
+
+.col-md-2 {
+}
+
+.col-md-6 {
+}
+
+#map {
+  
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.browser text {
+  text-anchor: end;
+}
+
+.area {
+  opacity: 0.7;
+  clip-path: url(#clip);
+}
+.area:hover {
+  opacity: 1;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
