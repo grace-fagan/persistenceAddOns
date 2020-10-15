@@ -8,7 +8,7 @@ const app = express()
 const axios = require('axios')
 
 
-// app.use(express.static("public"))
+app.use(express.static("public"))
 
 
 app.get('/APIdata', function(req, res){
