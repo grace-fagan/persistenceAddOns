@@ -53,6 +53,13 @@ toolsUsed.prototype.initVis = function(){
            		.on("drag", dragged)
            		.on("end", dragended));
 
+    vis.svg.selectAll("circle")
+      .append("text")
+        .attr("dx", vis.width/2)
+        .attr("text", function(d){
+          d.user
+        })
+
     var simulation = d3.forceSimulation()
       .force("center", d3.forceCenter().x(vis.width / 2).y(vis.height / 2)) // Attraction to the center of the svg area
       .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
