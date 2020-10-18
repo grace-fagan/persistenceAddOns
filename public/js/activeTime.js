@@ -88,7 +88,7 @@ activeTime.prototype.initVis = function(){
   var vis = this;
 
   vis.margin = {top: 10, right:10, bottom: 50, left: 50},
-      vis.width = 800 - vis.margin.left - vis.margin.right,
+      vis.width = 600 - vis.margin.left - vis.margin.right,
       vis.height = 400 - vis.margin.top - vis.margin.bottom;
 
   d3.select("#" + vis.parentElement).selectAll("*").remove();
