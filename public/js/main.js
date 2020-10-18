@@ -116,8 +116,6 @@ function processData(data){
 		}
 	})
 
-	console.log(data)
-
 }
 
 function createVis(data) {

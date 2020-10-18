@@ -70,9 +70,9 @@ function getVisInfo() {
 
   if (d3.select(".detail").select("input").property("checked")){
     detail = true;
-    keys = ["AT_1_P", "AT_1_F", "AT_2_P", "AT_2_F", "AT_3_P", "AT_3_F"]
+    keys = ["AT_1_P", "AT_2_P", "AT_3_P", "AT_1_F", "AT_2_F", "AT_3_F"]
     color.domain(keys)
-    color.range(["#3F8FD2", 'url(#diagonalHatchE)', "#FFC000", 'url(#diagonalHatchM)', "#FF4C00", 'url(#diagonalHatchH)'])}
+    color.range(["#3F8FD2", "#FFC000", "#FF4C00", 'url(#diagonalHatchE)', 'url(#diagonalHatchM)', 'url(#diagonalHatchH)'])}
     // color.range(["#3F8FD2", "#3F8FD2", "#FFC000", "#FFC000", "#FF4C00", "#FF4C00"])}
   else {
     detail = false;
@@ -130,7 +130,8 @@ activeTime.prototype.initVis = function(){
         name: name, 
         y0: y0, 
         y1: y0 += +value, 
-        value: value
+        value: value,
+        total: d.active_time
       }; 
       });
     d.total = d.time[d.time.length - 1].y1;
@@ -199,6 +200,53 @@ activeTime.prototype.initVis = function(){
             }
         });
 
+  // create a tooltip
+  var Tooltip = d3.select("#" + this.parentElement)
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+    .style("height", "45px")
+    .style("width", "200px")
+
+  var mouseover = function(d) {
+    Tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+  }
+  var mousemove = function(d) {
+    Tooltip
+      .html(d.user + " spent "  + (100 * (d.value / d.total)).toFixed(1) + "% of their time <br>" + vartoText(d.name) + " puzzles.")
+      .style("left", (d3.event.pageX) + "px")
+      .style("top", (d3.event.pageY) + "px")
+  }
+  var mouseleave = function(d) {
+    Tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+  }
+
+  function vartoText(d) {
+    
+    switch(d){
+      case "AT_1": return "on easy"
+      case "AT_2": return "on medium"
+      case "AT_3": return "on hard"
+      case "AT_1_P": return "completing easy"
+      case "AT_2_P": return "completing medium"
+      case "AT_3_P": return "completing hard"
+      case "AT_1_F": return "on unfinished easy"
+      case "AT_2_F": return "on unfinished medium"
+      case "AT_3_F": return "on unfinished hard"
+    }
+  }
+
   //Draw Stacked Chart
   user.selectAll("rect")
     .data(function(d) {
@@ -214,7 +262,10 @@ activeTime.prototype.initVis = function(){
         classLabel = d.name.replace(/\s/g, ''); //remove spaces
         return "bars class" + classLabel;
       })
-      .style("fill", function(d) { return info.color(d.name); });
+      .style("fill", function(d) { return info.color(d.name); })
+      .on("mouseover", mouseover)
+      .on("mousemove", mousemove)
+      .on("mouseleave", mouseleave);
 
 
   //LEGEND
