@@ -7,7 +7,7 @@ const app = express()
 
 const axios = require('axios')
 
-const group = 'leja2'
+const group = 'leja'
 
 
 app.use(express.static("public"))
