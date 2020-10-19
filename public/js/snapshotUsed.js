@@ -1,27 +1,14 @@
-toolsUsed = function(_parentElement, _data){
+snapshotUsed = function(_parentElement, _data){
     this.parentElement = _parentElement;
     data = _data;
     this.initVis();
 }
 
-function getPercentageChange(avg, student){
-    var sign;
-    var decreaseValue = avg - student;
-    var percentChange = (decreaseValue / ((avg + student) / 2)) * 100;
-
-    if (Math.sign(percentChange) == 1)
-      sign = "less"
-    else
-      sign = "more"
-
-    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
-}
-
-toolsUsed.prototype.initVis = function(){
+snapshotUsed.prototype.initVis = function(){
 
 	var vis = this;	
 
-	vis.margin = {top: 50, right:10, bottom: 100, left: 50},
+	vis.margin = {top: 0, right:10, bottom: 50, left: 10},
       vis.width = 500 - vis.margin.left - vis.margin.right,
       vis.height = 500 - vis.margin.top - vis.margin.bottom;
 
@@ -37,7 +24,7 @@ toolsUsed.prototype.initVis = function(){
           "translate(" + vis.margin.left + "," + vis.margin.top + ")");
 
 	vis.myScale = d3.scaleLinear()
-  		.domain([0, .5])
+  		.domain([0, .1])
   		.range([5, 90]);
 
 	data.forEach(function(d){
@@ -57,9 +44,6 @@ toolsUsed.prototype.initVis = function(){
 
 	})
 
-  var avg_rotate = 60 * (data.reduce(function (total, user){
-    return total + user.rotate}, 0) / data.length)
-
   var Tooltip = d3.select("#" + this.parentElement)
     .append("div")
     .attr("class", "tooltip")
@@ -75,13 +59,14 @@ toolsUsed.prototype.initVis = function(){
   var mouseover = function(d) {
     Tooltip
       .style("opacity", 1)
+    console.log(this)
     d3.select(this)
       .style("stroke", "black")
   }
   var mousemove = function(d) {
-    var change = getPercentageChange(avg_rotate, (60 * d.rotate))
+    console.log(d)
     Tooltip
-      .html(d.user + " used the rotate tool " + change.PC + "% " + change.sign + " than your average student")
+      .html(d.user + " used the")
       .style("left", (d3.mouse(this)[0]+30) + "px")
       .style("top", (d3.mouse(this)[1]+30) + "px")
   }
@@ -99,22 +84,13 @@ toolsUsed.prototype.initVis = function(){
   var elemEnter = node.enter()
     .append("g")
 
-  var circle_clicked = false;
-
   var circle = elemEnter.append("circle")
 			.attr("r", function(d){
-						return vis.myScale(d.rotate)
+						return vis.myScale(d.snapshot)
 					})
   		.attr("cx", vis.width / 2)
   		.attr("cy", vis.height / 2)
-  		.style("fill", function(d){
-        console.log(d.data[d.data.length - 1].persistenceAcrossAttempts)
-        switch(d.data[d.data.length - 1].persistenceAcrossAttempts){
-          case "LESS_PERSISTANCE_THAN_NORMAL": return "#33FF33"
-          case "NORMAL_PERSISTANCE": return "#00CC00"
-          case "MORE_PERSISTANCE_THAN_NORMAL": return "#006600"
-        }
-      })
+  		.style("fill", "orange")
   		.style("fill-opacity", .7)
   		// .call(d3.drag() // call specific function when circle is dragged
     //      		.on("start", dragstarted)
@@ -122,35 +98,16 @@ toolsUsed.prototype.initVis = function(){
     //      		.on("end", dragended))
       .on("mouseover", mouseover)
       .on("mousemove", mousemove)
-      .on("mouseleave", mouseleave)
-
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          circle_clicked = true;
-          for (var i = circle._groups[0].length - 1; i >= 0; i--) {
-            if (circle._groups[0][i] != this) {
-              d3.select(circle._groups[0][i])
-                .style("opacity", .2)
-            }
-          }
-        } else {
-            circle_clicked = false
-            for (var i = circle._groups[0].length - 1; i >= 0; i--) {
-                d3.select(circle._groups[0][i])
-                  .style("opacity", 1)
-              }
-            }
-        });
+      .on("mouseleave", mouseleave);
 
   var text = elemEnter.append("text")
-      .attr("dx", function(d){return 10})
+      .attr("dx", function(d){return 100})
       .text(function(d){return d.user})
 
   var simulation = d3.forceSimulation()
     .force("center", d3.forceCenter().x(vis.width / 2).y(vis.height / 2)) // Attraction to the center of the svg area
     .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
-    .force("collide", d3.forceCollide().strength(.2).radius(function(d){return vis.myScale(d.rotate)+ 5 }).iterations(1)) // Force that avoids circle overlapping
+    .force("collide", d3.forceCollide().strength(.2).radius(function(d){return vis.myScale(d.snapshot) + 3}).iterations(1)) // Force that avoids circle overlapping
 
     // Apply these forces to the nodes and update their positions.
     // Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
@@ -163,7 +120,7 @@ toolsUsed.prototype.initVis = function(){
         text
           .attr("dx", function(d){ return d.x - 10; })
           .attr("dy", function(d){ return d.y; })
-          .attr("font-size", "8px")
+          .attr("font-size", "11px")
       });
 
  //    function dragstarted(d) {

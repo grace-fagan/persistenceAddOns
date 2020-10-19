@@ -122,4 +122,6 @@ function createVis(data) {
 
 	activeTime = new activeTime("active_time", data)
 	toolsUsed = new toolsUsed("tools_used", data)
+	// snapshotUsed = new snapshotUsed("snapshot_used", data)
+
 }
