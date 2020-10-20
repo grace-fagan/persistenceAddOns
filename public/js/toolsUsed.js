@@ -83,7 +83,7 @@ toolsUsed.prototype.initVis = function(){
     Tooltip
       .html(d.user + " used the rotate tool " + change.PC + "% " + change.sign + " than your average student")
       .style("left", (d3.mouse(this)[0]+30) + "px")
-      .style("top", (d3.mouse(this)[1]+30) + "px")
+      .style("top", (d3.mouse(this)[1]+50) + "px")
   }
   var mouseleave = function(d) {
     Tooltip
@@ -144,7 +144,7 @@ toolsUsed.prototype.initVis = function(){
         });
 
   var text = elemEnter.append("text")
-      .attr("dx", function(d){return 10})
+      .attr("dx", function(d){return 100})
       .text(function(d){return d.user})
 
   var simulation = d3.forceSimulation()
