@@ -21,7 +21,17 @@
 	<div class="container-fluid">
 
 	<div class="row" id="title">
-			<h1>Persistance Add-Ons: Class Data</h1>	
+			<h1>Persistence Add-Ons</h1>	
+	</div>
+
+	<div class="row" id="group_select">
+			<label for="groups">Choose a class:</label>	
+			<select name="groups" id="groups" onchange="selectGroup(this.value)">
+  				<option value="leja">leja</option>
+  				<option value="leja2">leja 2</option>
+  				<option value="juliamorgan">julia morgan</option>
+  				<option value="ginnymason">ginny mason</option>
+			</select>
 	</div>
 
 	<div class="row">
@@ -42,10 +52,10 @@
 		</div>
 		<div id="active_time"></div>
 	</div>
-	<div class="col-md-6">
+	<div class="col-md-5">
 		<div class="row">
 			<h1>Use of rotate tool</h1>	
-			<h2>Color of the bubble represents calculated persistance level: <br> Less than, Normal than, More than normal</h2>
+			<h2>Color of the bubble represents calculated persistence level: <br> Less than, Normal than, More than normal</h2>
 		</div>
 		<div id="tools_used"></div>
 	</div>
@@ -70,6 +80,7 @@
 	<script src="https://d3js.org/d3.v4.min.js"></script>
 
 	<!-- Load data, create visualizations -->
+	<script src="js/vis.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/activeTime.js"></script>
 	<script src="js/toolsUsed.js"></script>

@@ -21,7 +21,7 @@ toolsUsed.prototype.initVis = function(){
 
 	var vis = this;	
 
-	vis.margin = {top: 50, right:10, bottom: 100, left: 50},
+	vis.margin = {top: 50, right:10, bottom: 100, left: 0},
       vis.width = 500 - vis.margin.left - vis.margin.right,
       vis.height = 500 - vis.margin.top - vis.margin.bottom;
 

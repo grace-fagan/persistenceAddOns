@@ -1,32 +1,35 @@
 var activeTime;
 var toolsUsed;
 
-var url = 'https://persistence-addons.herokuapp.com'
+var url = window.location
 
-var request = new XMLHttpRequest()
-request.open('GET', url + '/APIdata', true)
+function selectGroup(group){
 
+	var request = new XMLHttpRequest()
+	request.open('GET', url + 'APIdata/' + group, true)
 
-request.onload = function loadData() {
+	request.onload = function loadData() {
 
-  	var res = JSON.parse(this.response)
+	  	var res = JSON.parse(this.response)
 
-  	var data = []
-  	var idx = 0
+	  	var data = []
+	  	var idx = 0
 
-	for(var i in res){
-		data[idx] = new Object()
-		data[idx].user = i
-		data[idx].data = res[i]
-		idx++
+		for(var i in res){
+			data[idx] = new Object()
+			data[idx].user = i
+			data[idx].data = res[i]
+			idx++
+		}
+			
+	  	processData(data);
+	  	createVis(data);
+
 	}
-		
-  	processData(data);
-  	createVis(data);
+
+	request.send()
 
 }
-
-request.send()
 
 function processData(data){
 
@@ -119,6 +122,8 @@ function processData(data){
 }
 
 function createVis(data) {
+
+	// var vis = initVis(data);
 
 	activeTime = new activeTime("active_time", data)
 	toolsUsed = new toolsUsed("tools_used", data)
