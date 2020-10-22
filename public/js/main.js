@@ -123,10 +123,10 @@ function processData(data){
 
 function createVis(data) {
 
-	// var vis = initVis(data);
+	var vis = initVis(data);
 
-	activeTime = new activeTime("active_time", data)
-	toolsUsed = new toolsUsed("tools_used", data)
+	// activeTime = new activeTime("active_time", data)
+	// toolsUsed = new toolsUsed("tools_used", data)
 	// snapshotUsed = new snapshotUsed("snapshot_used", data)
 
 }

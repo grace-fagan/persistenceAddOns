@@ -27,6 +27,7 @@
 	<div class="row" id="group_select">
 			<label for="groups">Choose a class:</label>	
 			<select name="groups" id="groups" onchange="selectGroup(this.value)">
+  				<option value="none">none</option>
   				<option value="leja">leja</option>
   				<option value="leja2">leja 2</option>
   				<option value="juliamorgan">julia morgan</option>
@@ -35,7 +36,7 @@
 	</div>
 
 	<div class="row">
-			<h2>Student selected: </h2>	
+			<h2 id="student_highlight">Student selected: </h2>	
 	</div>
 
 	<div class="row">
@@ -54,8 +55,16 @@
 	</div>
 	<div class="col-md-5">
 		<div class="row">
-			<h1>Use of rotate tool</h1>	
-			<h2>Color of the bubble represents calculated persistence level: <br> Less than, Normal than, More than normal</h2>
+			<h1>Use of game tools</h1>	
+			<h2>Color of the bubble represents calculated persistence level: <br> 
+			Less than normal, Normal, More than normal</h2>
+		</div>
+		<div class="row">
+		<label class="tools">Choose a tool:</label>	
+			<select onchange="getTool(this.value)">
+  				<option value="rotate_view">rotate view</option>
+  				<option value="snapshot">snapshot</option>
+			</select>
 		</div>
 		<div id="tools_used"></div>
 	</div>
@@ -82,10 +91,10 @@
 	<!-- Load data, create visualizations -->
 	<script src="js/vis.js"></script>
 	<script src="js/main.js"></script>
-	<script src="js/activeTime.js"></script>
-	<script src="js/toolsUsed.js"></script>
-	<script src="js/snapshotUsed.js"></script>
-
+<!-- 	<script src="js/activeTime.js"></script>
+	<script src="js/toolsUsed.js"></script> -->
+<!-- 	<script src="js/snapshotUsed.js"></script>
+ -->
 
 </body>
 </html>

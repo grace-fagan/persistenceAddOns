@@ -1,5 +1,19 @@
+//Global variables
+var activeTime;
+var toolsUsed;
+var Data;
+var tool;
+
+function getTool(tool){
+  tool = tool
+  if (Data != null){
+    initToolsUsed(Data, tool)
+  }
+}
 
 function initVis(data) {
+
+  Data = data;
 
 	//disable sort checkbox
 	d3.select(".sort")             
@@ -12,29 +26,230 @@ function initVis(data) {
 	  .select("input")
 	  .property("checked", false);
 
-	var active_time = initActiveTime(data);
+  d3.select(".tools")
+    .select("select")
+    .property("onchange", getTool(this.value))
 
+	activeTime = initActiveTime(data);
+  toolsUsed = initToolsUsed(data, "rotate_view");
 }
 
-function initActiveTime(data) {
+function initToolsUsed(data, tool) {
 
-	var margin = {top: 10, right:10, bottom: 50, left: 50},
-      width = 600 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
+  if (tool == null) {
+    tool = "rotate_view"
+  }
 
-  	d3.select("#active_time").selectAll("*").remove();
+  var margin = {top: 50, right:10, bottom: 100, left: 0},
+    width = 500 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
 
-	//allocate space for viz
-  	var active_time = d3.select("#active_time").append("svg")
+  d3.select("#tools_used").selectAll("*").remove();
+
+  //allocate space for viz
+  var tools_used = d3.select("#tools_used");
+
+  tools_used.svg = tools_used.append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-    console.log(active_time);
+  switch (tool){
+    case "rotate_view": 
+      tools_used.myScale = d3.scaleLinear()
+        .domain([0, .5])
+        .range([5, 90]);
+      break;
+    case "snapshot": 
+      tools_used.myScale = d3.scaleLinear()
+        .domain([0, .1])
+        .range([5, 90]);
+  }
 
-  // d3.select(".detail").on("change", changeVis)
+  data.forEach(function(d){
+    d.n_rotate_view = d.data.reduce(function (total, attempt){
+                      return total + attempt.n_rotate_view}, 0)
+
+    d.n_snapshot = d.data.reduce(function (total, attempt){
+                      return total + attempt.n_snapshot}, 0)
+
+    d.active_time = d.data.reduce(function (total, attempt){
+                      return total + attempt.active_time}, 0)
+
+    d.num_attempts = d.data.length
+
+    d.rotate_view = (d.n_rotate_view / d.active_time)
+    d.snapshot = (d.n_snapshot / d.active_time)
+
+  })
+
+  var class_avg = 60 * (data.reduce(function (total, user){
+    return total + user[tool]}, 0) / data.length)
+
+  var Tooltip = d3.select("#tools_used")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+    .style("height", "45px")
+    .style("width", "220px")
+
+  var mouseover = function(d) {
+    Tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+  }
+  var mousemove = function(d) {
+    var change = getPercentageChange(class_avg, (60 * d[tool]))
+    Tooltip
+      .html(d.user + " used the " + tool + " tool " + change.PC + "% " + change.sign + " than your average student")
+      .style("left", (d3.mouse(this)[0]+30) + "px")
+      .style("top", (d3.mouse(this)[1]+50) + "px")
+  }
+  var mouseleave = function(d) {
+    Tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+  }
+
+  var node = tools_used.svg.append("g")
+    .selectAll("circle")
+    .data(data)
+
+  var elemEnter = node.enter()
+    .append("g")
+
+  var circle_clicked = false;
+
+  tools_used.circle = elemEnter.append("circle")
+      .attr("r", function(d){
+            return tools_used.myScale(d[tool])
+          })
+      .attr("cx", width / 2)
+      .attr("cy", height / 2)
+      .style("fill", function(d){
+        switch(d.data[d.data.length - 1].persistenceAcrossAttempts){
+          case "LESS_PERSISTANCE_THAN_NORMAL": return "#33FF33"
+          case "NORMAL_PERSISTANCE": return "#00CC00"
+          case "MORE_PERSISTANCE_THAN_NORMAL": return "#006600"
+        }
+      })
+      .style("fill-opacity", .7)
+      .call(d3.drag() // call specific function when circle is dragged
+             .on("start", dragstarted)
+             .on("drag", dragged)
+             .on("end", dragended))
+      .on("mouseover", mouseover)
+      .on("mousemove", mousemove)
+      .on("mouseleave", mouseleave)
+
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(d);
+          }
+        });
+
+  var text = elemEnter.append("text")
+      .attr("dx", function(d){return 100})
+      .text(function(d){return d.user})
+
+  var simulation = d3.forceSimulation()
+    .force("center", d3.forceCenter().x(width / 2).y(height / 2)) // Attraction to the center of the svg area
+    .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
+    .force("collide", d3.forceCollide().strength(.2).radius(function(d){return tools_used.myScale(d[tool]) + 5}).iterations(1)) // Force that avoids circle overlapping
+
+    // Apply these forces to the nodes and update their positions.
+    // Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
+    simulation
+      .nodes(data)
+      .on("tick", function(d){
+        tools_used.circle
+            .attr("cx", function(d){ return d.x; })
+            .attr("cy", function(d){ return d.y; })
+        text
+          .attr("dx", function(d){ return d.x - 10; })
+          .attr("dy", function(d){ return d.y; })
+          .attr("font-size", "8px")
+      });
+
+  function dragstarted(d) {
+      if (!d3.event.active) simulation.alphaTarget(.03).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+  }
+
+  function dragged(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+  }
+
+  function dragended(d) {
+      if (!d3.event.active) simulation.alphaTarget(.03);
+      d.fx = null;
+      d.fy = null;
+  }
+
+  function getPercentageChange(avg, student){
+    var sign;
+    var decreaseValue = avg - student;
+    var percentChange = (decreaseValue / ((avg + student) / 2)) * 100;
+
+    if (Math.sign(percentChange) == 1)
+      sign = "less"
+    else
+      sign = "more"
+
+    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
+  }
+
+  return tools_used;
+}
+
+function initActiveTime(data) {
+
+  var active_link = "0"; //to control legend selections and hover
+  var legendClicked; //to control legend selections
+  var legendClassArray = []; //store legend classes to select bars in plotSingle()
+  var legendClassArray_orig = []; //orig (with spaces)
+  var sortDescending; //if true, bars are sorted by height in descending order
+  var restoreXFlag = false; //restore order of bars back to original
+
+	var margin = {top: 10, right:10, bottom: 50, left: 50},
+      width = 600 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    d3.select("#active_time").selectAll("*").remove();
+
+	   //allocate space for viz
+  var active_time = d3.select("#active_time")
+
+    active_time.svg = active_time.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  d3.select(".detail").on("change", changeVis)
+
+  function changeVis() {
+  
+    active_time = initActiveTime(data);
+  
+  } 
 
   //add patterns for detail vis
   active_time = addPatterns(active_time);
@@ -72,13 +287,13 @@ function initActiveTime(data) {
 
   //set x and y ranges
   var x = d3.scaleBand()
-    .rangeRound([0, vis.width])
+    .rangeRound([0, width])
     .padding(.15)
   // vis.x = d3.scaleOrdinal()
   //   .rangeRoundBands([0, vis.width], .2);
 
   var y = d3.scaleLinear()
-    .rangeRound([vis.height, 0]);
+    .rangeRound([height, 0]);
 
   //set x and y domains
   data.sort(function(a, b) {return -a.total + b.total;});
@@ -90,7 +305,7 @@ function initActiveTime(data) {
     var yAxis = d3.axisLeft(y);
 
   //Draw x and y-axis
-  active_time.append("g")
+  active_time.svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis)
@@ -99,15 +314,15 @@ function initActiveTime(data) {
           .attr("dy", "0em")
         .attr("transform", "rotate(-65)")
 
-  active_time.append("g")
+  active_time.svg.append("g")
       .attr("class", "y axis")
       .attr("transform", "translate(0,0)")
-      .call(vis.yAxis);
+      .call(yAxis);
 
   var bar_clicked = false;
 
   //create g for each user column (instead of specific time chunk)
-  var user = active_time.selectAll(".user")
+  active_time.user = active_time.svg.selectAll(".user")
       .data(data)
     .enter().append("g")
       .attr("class", "g")
@@ -117,21 +332,13 @@ function initActiveTime(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (bar_clicked == false){
+          highlightStudent(d);
           bar_clicked = true;
-          for (var i = user._groups[0].length - 1; i >= 0; i--) {
-            if (user._groups[0][i] != this) {
-              d3.select(user._groups[0][i])
-                .style("opacity", .2)
-            }
-          }
         } else {
-            bar_clicked = false
-            for (var i = user._groups[0].length - 1; i >= 0; i--) {
-                d3.select(user._groups[0][i])
-                  .style("opacity", 1)
-              }
-            }
-        });
+            unhighlightStudent(d);
+            bar_clicked = false;
+          }
+      });
 
   // create a tooltip
   var Tooltip = d3.select("#active_time")
@@ -156,7 +363,7 @@ function initActiveTime(data) {
     Tooltip
       .html(d.user + " spent "  + (100 * (d.value / d.total)).toFixed(1) + "% of their time <br>" + vartoText(d.name) + " puzzles.")
       .style("left", (d3.event.pageX) + "px")
-      .style("top", (d3.event.pageY) + "px")
+      .style("top", (d3.event.pageY) - 100 + "px")
   }
   var mouseleave = function(d) {
     Tooltip
@@ -181,7 +388,7 @@ function initActiveTime(data) {
   }
 
   //Draw Stacked Chart
-  user.selectAll("rect")
+  active_time.user.selectAll("rect")
     .data(function(d) {
       return d.time; 
     })
@@ -202,7 +409,7 @@ function initActiveTime(data) {
 
 
   //LEGEND
-  var legend = active_time.append("g")
+  var legend = active_time.svg.append("g")
       .attr("font-family", "sans-serif")
       .attr("font-size", 10)
       .attr("text-anchor", "end")
@@ -297,7 +504,7 @@ function initActiveTime(data) {
         } });
 
   legend.append("text")
-      .attr("x", vis.width - 24)
+      .attr("x", width - 24)
       .attr("y", 9.5)
       .attr("dy", "0.32em")
       .text(function(d) {
@@ -316,7 +523,7 @@ function initActiveTime(data) {
   function restorePlot(d) {
 
     //translate bars back up to original y-posn
-    user.selectAll("rect")
+    active_time.user.selectAll("rect")
       .attr("x", function(d) {
         return x(d.user); })
       .transition()
@@ -325,7 +532,7 @@ function initActiveTime(data) {
         if (restoreXFlag) return 2000; //bars have to be restored to orig posn
         else return 0;
       })
-      .attr("y", function(d) {return vis.y(d.y1); });
+      .attr("y", function(d) {return y(d.y1); });
 
     //reset
     restoreXFlag = false;  
@@ -337,7 +544,7 @@ function initActiveTime(data) {
     idx = legendClassArray.indexOf(class_keep);
 
     //shift positioning of the bars  
-    user.nodes().forEach(function (d, i) {
+    active_time.user.nodes().forEach(function (d, i) {
 
       var nodes = d.childNodes;
   
@@ -404,15 +611,15 @@ function initActiveTime(data) {
         .map(function(d,i) { return d.user; }))
         .copy();
 
-    user.selectAll("rect")
+    active_time.user.selectAll("rect")
          .sort(function(a, b) { 
             return x0(a.user) - x0(b.user); 
           });
 
-    var transition = vis.svg.transition().duration(750),
+    var transition = active_time.transition().duration(750),
         delay = function(d, i) { return i * 20; };
 
-    user.selectAll("rect")
+    active_time.user.selectAll("rect")
       .transition()
       .duration(750)
       .attr("x", function(d) {      
@@ -424,13 +631,110 @@ function initActiveTime(data) {
         .call(xAxis)
         .selectAll("g")
         .delay(delay);
+  }
 
-    function changeVis() {
-    	vis.initVis()
-  	}
-
-    return vis;   
+  console.log(active_time)
+  return active_time;
 }
 
+function addPatterns(vis) {
 
+  //Append patterns for successful/unsuccessful active time
+  vis.svg.append('defs')
+  .append('pattern')
+    .attr('id', 'diagonalHatchE')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 4)
+    .attr('height', 4)
+  .append('path')
+    .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+    .attr('stroke', '#3F8FD2')
+    .attr('stroke-width', 1);
+
+  vis.svg.append('defs')
+  .append('pattern')
+    .attr('id', 'diagonalHatchM')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 4)
+    .attr('height', 4)
+  .append('path')
+    .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+    .attr('stroke', '#FFC000')
+    .attr('stroke-width', 1);
+
+  vis.svg.append('defs')
+  .append('pattern')
+    .attr('id', 'diagonalHatchH')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 4)
+    .attr('height', 4)
+  .append('path')
+    .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+    .attr('stroke', '#FF4C00')
+    .attr('stroke-width', 1);
+
+    return vis;
+}
+
+function getVisInfo() {
+  var keys;
+  var color = d3.scaleOrdinal();
+
+  if (d3.select(".detail").select("input").property("checked") == false){
+    detail = true;
+    keys = ["AT_1_P", "AT_2_P", "AT_3_P", "AT_1_F", "AT_2_F", "AT_3_F"]
+    color.domain(keys)
+    color.range(["#3F8FD2", "#FFC000", "#FF4C00", 'url(#diagonalHatchE)', 'url(#diagonalHatchM)', 'url(#diagonalHatchH)'])}
+    // color.range(["#3F8FD2", "#3F8FD2", "#FFC000", "#FFC000", "#FF4C00", "#FF4C00"])}
+  else {
+    detail = false;
+    keys = ["AT_1", "AT_2", "AT_3"]
+    color.domain(keys)
+    color.range(["#3F8FD2", "#FFC000", "#FF4C00"])}
+
+  return {detail: detail, keys: keys, color: color};
+}
+
+function highlightStudent(d) {
+
+  document.getElementById("student_highlight").innerHTML = "Student selected: " + d.user
+  
+  //highlight in circles
+  var circle_array = toolsUsed.circle._groups[0];
+
+  for (var i = circle_array.length - 1; i >= 0; i--) {
+    if (circle_array[i].__data__ != d) {
+      d3.select(circle_array[i])
+        .style("opacity", .2)
+    }
+  }
+
+  //highlight in bar chart
+  var bar_array = activeTime.user._groups[0];
+
+  for (var i = bar_array.length - 1; i >= 0; i--) {
+    if (bar_array[i].__data__ != d) {
+      d3.select(bar_array[i])
+        .style("opacity", .2)
+    }
+  }
+}
+
+function unhighlightStudent(d) {
+
+  document.getElementById("student_highlight").innerHTML = "Student selected:"
+
+  var circle_array = toolsUsed.circle._groups[0];
+
+  for (var i = circle_array.length - 1; i >= 0; i--) {
+    d3.select(circle_array[i])
+      .style("opacity", 1)
+  }
+
+  var bar_array = activeTime.user._groups[0];
+
+  for (var i = bar_array.length - 1; i >= 0; i--) {
+    d3.select(bar_array[i])
+      .style("opacity", 1)
+  }
 }
