@@ -680,7 +680,7 @@ function getVisInfo() {
   var keys;
   var color = d3.scaleOrdinal();
 
-  if (d3.select(".detail").select("input").property("checked") == false){
+  if (d3.select(".detail").select("input").property("checked")){
     detail = true;
     keys = ["AT_1_P", "AT_2_P", "AT_3_P", "AT_1_F", "AT_2_F", "AT_3_F"]
     color.domain(keys)
@@ -697,7 +697,7 @@ function getVisInfo() {
 
 function highlightStudent(d) {
 
-  document.getElementById("student_highlight").innerHTML = "Student selected: " + d.user
+  document.getElementById("student_highlight").innerHTML = "Student selected:<br>" + d.user
   
   //highlight in circles
   var circle_array = toolsUsed.circle._groups[0];
@@ -722,7 +722,7 @@ function highlightStudent(d) {
 
 function unhighlightStudent(d) {
 
-  document.getElementById("student_highlight").innerHTML = "Student selected:"
+  document.getElementById("student_highlight").innerHTML = "Student selected:<br>"
 
   var circle_array = toolsUsed.circle._groups[0];
 
