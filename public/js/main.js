@@ -73,7 +73,7 @@ function processData(data){
 	data.forEach(function(d){
 		
 		//create active time keys
-		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = 0
+		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed = 0
 
 		for (var i in d.data){
 			var attempt = d.data[i]
@@ -117,6 +117,17 @@ function processData(data){
 					}
 			}
 		}
+
+		// var failed_puzzles = []
+		// //Reattempts after failure
+		// for (var i in d.data){
+		// 	var attempt = d.data[i]
+		// 	if (attempt.completed == 0)
+		// 		failed_puzzles.push(attempt.task_id)
+		// 		d.num_failed ++
+		// console.log(d.num_failed)
+		// }
+
 	})
 
 }

@@ -1,19 +1,21 @@
 //Global variables
 var activeTime;
 var toolsUsed;
+var failedAttempts;
 var Data;
 var tool;
 
 function getTool(tool){
   tool = tool
   if (Data != null){
-    initToolsUsed(Data, tool)
+    toolsUsed = initToolsUsed(Data, tool)
   }
 }
 
 function initVis(data) {
 
   Data = data;
+  console.log(data)
 
 	//disable sort checkbox
 	d3.select(".sort")             
@@ -32,6 +34,7 @@ function initVis(data) {
 
 	activeTime = initActiveTime(data);
   toolsUsed = initToolsUsed(data, "rotate_view");
+  failedAttempts = initFailedAttempts(data);
 }
 
 function initToolsUsed(data, tool) {
@@ -42,7 +45,7 @@ function initToolsUsed(data, tool) {
 
   var margin = {top: 50, right:10, bottom: 100, left: 0},
     width = 500 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    height = 400 - margin.top - margin.bottom;
 
   d3.select("#tools_used").selectAll("*").remove();
 
@@ -246,8 +249,9 @@ function initActiveTime(data) {
   d3.select(".detail").on("change", changeVis)
 
   function changeVis() {
-  
-    active_time = initActiveTime(data);
+    
+    console.log("changing")
+    activeTime = initActiveTime(data);
   
   } 
 
@@ -333,6 +337,7 @@ function initActiveTime(data) {
       .on("click", function(d){
         if (bar_clicked == false){
           highlightStudent(d);
+
           bar_clicked = true;
         } else {
             unhighlightStudent(d);
@@ -637,6 +642,25 @@ function initActiveTime(data) {
   return active_time;
 }
 
+function initFailedAttempts(data) {
+
+var margin = {top: 50, right:10, bottom: 100, left: 0},
+    width = 500 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+  d3.select("#failed_attempts").selectAll("*").remove();
+
+  //allocate space for viz
+  var tools_used = d3.select("#failed_attempts");
+
+  tools_used.svg = tools_used.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+}
+
 function addPatterns(vis) {
 
   //Append patterns for successful/unsuccessful active time
@@ -712,8 +736,11 @@ function highlightStudent(d) {
   //highlight in bar chart
   var bar_array = activeTime.user._groups[0];
 
+  console.log(bar_array)
+
   for (var i = bar_array.length - 1; i >= 0; i--) {
     if (bar_array[i].__data__ != d) {
+      console.log("need to fade out ", bar_array[i])
       d3.select(bar_array[i])
         .style("opacity", .2)
     }
