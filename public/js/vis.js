@@ -851,8 +851,15 @@ function initFailedAttempts(data) {
     .append("circle")
       .attr("cx", function (d) { return x(d.num_failed); } )
       .attr("cy", function (d) { return y(d.reattempts_AF); } )
-      .attr("r", function(d){ return 5 * (d.reattempts_AF / d.num_failed);})
+      .attr("r", function(d){ return 8 * (d.reattempts_AF / d.num_failed);})
       .style("fill", "orange")
+
+    failed_attempts.svg.append("text")
+    .attr("class", "x label")
+    .attr("text-anchor", "end")
+    .attr("x", (width / 2) + 50)
+    .attr("y", height + 50)
+    .text("Total failed puzzles");
 
 }
 
