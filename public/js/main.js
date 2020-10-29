@@ -71,9 +71,10 @@ function processData(data){
 	};
 
 	data.forEach(function(d){
+		console.log(d)
 		
 		//create active time keys
-		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed = 0
+		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed = d.reattempts_AF = 0
 
 		for (var i in d.data){
 			var attempt = d.data[i]
@@ -118,15 +119,32 @@ function processData(data){
 			}
 		}
 
-		// var failed_puzzles = []
-		// //Reattempts after failure
-		// for (var i in d.data){
-		// 	var attempt = d.data[i]
-		// 	if (attempt.completed == 0)
-		// 		failed_puzzles.push(attempt.task_id)
-		// 		d.num_failed ++
-		// console.log(d.num_failed)
-		// }
+		var failed_puzzles = []
+		//Reattempts after failure
+		for (var i in d.data){
+			var attempt = d.data[i]
+			if (failed_puzzles.includes(attempt.task_id)) {
+				if (attempt.completed == 1) {
+					d.reattempts_AF ++;
+					//remove from failed puzzles array
+					failed_puzzles.splice(failed_puzzles.indexOf(attempt.task_id), 1);
+				} else {
+					d.num_failed ++;
+					d.reattempts_AF ++;
+				}
+			} else {
+				if (attempt.completed == 1) {
+					continue;
+				} else {
+					d.num_failed ++;
+					failed_puzzles.push(attempt.task_id)
+				}
+			}
+		}
+		console.log("num failed", d.num_failed, "attempts AF", d.reattempts_AF)
+
+
+
 
 	})
 

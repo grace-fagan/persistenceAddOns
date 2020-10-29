@@ -1,6 +1,7 @@
 //Global variables
 var activeTime;
 var toolsUsed;
+var toolsUsedNew;
 var failedAttempts;
 var Data;
 var tool;
@@ -33,8 +34,180 @@ function initVis(data) {
     .property("onchange", getTool(this.value))
 
 	activeTime = initActiveTime(data);
+  toolsUsedNEW = initToolsUsed_NEW(data);
   toolsUsed = initToolsUsed(data, "rotate_view");
   failedAttempts = initFailedAttempts(data);
+}
+
+function initToolsUsed_NEW(data) {
+
+  var margin = {top: 50, right:10, bottom: 100, left: 10},
+    width = 600 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+  d3.select("#tools_used_NEW").selectAll("*").remove();
+
+  //allocate space for viz
+  var tools_used_NEW = d3.select("#tools_used_NEW");
+
+  tools_used_NEW.svg = tools_used_NEW.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  data.forEach(function(d){
+    d.n_rotate_view = d.data.reduce(function (total, attempt){
+                      return total + attempt.n_rotate_view}, 0)
+
+    d.n_snapshot = d.data.reduce(function (total, attempt){
+                      return total + attempt.n_snapshot}, 0)
+
+    d.n_submits = d.data.reduce(function (total, attempt){
+                      return total + attempt.n_check_solution}, 0)
+
+    d.active_time = d.data.reduce(function (total, attempt){
+                      return total + attempt.active_time}, 0)
+
+    d.num_attempts = d.data.length
+
+    d.rotate_view = (d.n_rotate_view / d.num_attempts)
+    d.snapshot = (d.n_snapshot / d.num_attempts)
+    d.submits = (d.n_submits / d.num_attempts)
+
+  })
+
+  var r = d3.scaleLinear()
+        .domain([0, 50])
+        .range([0, 50]);
+
+  var small_r = d3.scaleLinear()
+      .domain([0, 20])
+      .range([0, 50]);
+
+  var x = d3.scaleLinear()
+    .domain([20, 100])
+    .range([ 0, width]);
+
+
+  tools_used_NEW.svg.append("g")
+    .attr("transform", "translate(0," + (height - 50) + ")")
+    .call(d3.axisBottom(x));
+
+  tools_used_NEW.svg.append("g")
+    .attr("transform", "translate(0," + 50 + ")")
+    .call(d3.axisBottom(x));
+
+  tools_used_NEW.svg.append("g")
+    .attr("transform", "translate(0," + (height / 2) + ")")
+    .call(d3.axisBottom(x));
+
+  tools_used_NEW.svg.append("text")
+    .attr("class", "x label")
+    .attr("text-anchor", "end")
+    .attr("x", (width / 2) + 50)
+    .attr("y", height)
+    .text("Composite Persistence score");
+
+  tools_used_NEW.svg.append("text")
+    .attr("class", "circle label")
+    .attr("text-anchor", "end")
+    .attr("x", 75)
+    .attr("y", - 25)
+    .text("Check solution");
+
+  tools_used_NEW.svg.append("text")
+    .attr("class", "circle label")
+    .attr("text-anchor", "end")
+    .attr("x", 50)
+    .attr("y", (height / 2) - 75)
+    .text("Snapshot");
+
+  tools_used_NEW.svg.append("text")
+    .attr("class", "circle label")
+    .attr("text-anchor", "end")
+    .attr("x", 50)
+    .attr("y", height - 140)
+    .text("Rotate View");
+
+  var circle_clicked = false;
+
+  var node = tools_used_NEW.svg.append("g")
+    .selectAll("dot")
+    .data(data)
+
+  var elemEnter = node.enter()
+    .append("g")
+
+  tools_used_NEW.dot = elemEnter.append("circle")
+      .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
+      .attr("cy", 0)
+      .attr("r", function (d) { return small_r(d.submits); } )
+      .style("fill", "#00CC00")
+      .style("opacity", ".7")
+      .attr("stroke", "black")
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(d);
+          }
+        });
+
+  var node2 = tools_used_NEW.svg.append("g")
+    .selectAll("dot")
+    .data(data)
+
+  var elemEnter2 = node2.enter()
+    .append("g")
+
+  tools_used_NEW.dot2 = elemEnter2.append("circle")
+      .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
+      .attr("cy", (height / 2) - 50)
+      .attr("r", function (d) { return small_r(d.snapshot); } )
+      .style("fill", "#00CC00")
+      .style("opacity", ".7")
+      .attr("stroke", "black")
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(d);
+          }
+        });
+
+  var node3 = tools_used_NEW.svg.append("g")
+    .selectAll("circle")
+    .data(data)
+
+  var elemEnter3 = node3.enter()
+    .append("g")
+
+  tools_used_NEW.dot3 = elemEnter3.append("circle")
+      .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
+      .attr("cy", height - 100)
+      .attr("r", function (d) { return r(d.rotate_view); } )
+      .style("fill", "#00CC00")
+      .style("opacity", ".7")
+      .attr("stroke", "black")
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(d);
+          }
+        });
+  return tools_used_NEW
 }
 
 function initToolsUsed(data, tool) {
@@ -62,13 +235,13 @@ function initToolsUsed(data, tool) {
   switch (tool){
     case "rotate_view": 
       tools_used.myScale = d3.scaleLinear()
-        .domain([0, .5])
-        .range([5, 90]);
+        .domain([0, 50])
+        .range([0, 50]);
       break;
     case "snapshot": 
       tools_used.myScale = d3.scaleLinear()
-        .domain([0, .1])
-        .range([5, 90]);
+        .domain([0, 50])
+        .range([0, 50]);
   }
 
   data.forEach(function(d){
@@ -83,8 +256,8 @@ function initToolsUsed(data, tool) {
 
     d.num_attempts = d.data.length
 
-    d.rotate_view = (d.n_rotate_view / d.active_time)
-    d.snapshot = (d.n_snapshot / d.active_time)
+    d.rotate_view = (d.n_rotate_view / d.num_attempts)
+    d.snapshot = (d.n_snapshot / d.num_attempts)
 
   })
 
@@ -250,9 +423,8 @@ function initActiveTime(data) {
 
   function changeVis() {
     
-    console.log("changing")
     activeTime = initActiveTime(data);
-  
+
   } 
 
   //add patterns for detail vis
@@ -637,28 +809,51 @@ function initActiveTime(data) {
         .selectAll("g")
         .delay(delay);
   }
-
-  console.log(active_time)
   return active_time;
 }
 
 function initFailedAttempts(data) {
 
-var margin = {top: 50, right:10, bottom: 100, left: 0},
+  var margin = {top: 50, right:10, bottom: 100, left: 30},
     width = 500 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
   d3.select("#failed_attempts").selectAll("*").remove();
 
   //allocate space for viz
-  var tools_used = d3.select("#failed_attempts");
+  var failed_attempts = d3.select("#failed_attempts");
 
-  tools_used.svg = tools_used.append("svg")
+  failed_attempts.svg = failed_attempts.append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
+
+    console.log(data)
+    var x = d3.scaleLinear()
+    .domain([0, d3.max(data, function(d) { return d.num_failed; }) + 3])
+    .range([ 0, width]);
+    failed_attempts.svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+
+    var y = d3.scaleLinear()
+    .domain([0, d3.max(data, function(d) { return d.reattempts_AF; }) + 3])
+    .range([ height, 0]);
+    failed_attempts.svg.append("g")
+    .call(d3.axisLeft(y));
+
+    failed_attempts.svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+      .attr("cx", function (d) { return x(d.num_failed); } )
+      .attr("cy", function (d) { return y(d.reattempts_AF); } )
+      .attr("r", function(d){ return 5 * (d.reattempts_AF / d.num_failed);})
+      .style("fill", "orange")
+
 }
 
 function addPatterns(vis) {
@@ -721,28 +916,92 @@ function getVisInfo() {
 
 function highlightStudent(d) {
 
-  document.getElementById("student_highlight").innerHTML = "Student selected:<br>" + d.user
+  document.getElementById("student_highlight").innerHTML = "Student selected:" + d.user
   
+  //highlight in tools used NEW
+  var dot_array = toolsUsedNEW.dot._groups[0];
+  var tool1;
+  var tool2;
+  var tool3;
+
+  for (var i = dot_array.length - 1; i >= 0; i--) {
+    if (dot_array[i].__data__ != d) {
+      d3.select(dot_array[i])
+        .style("opacity", .05)
+    } else {
+      tool1 = dot_array[i]
+      d3.select(dot_array[i])
+        .style("opacity", 1)
+    }
+  }
+
+  console.log("user", tool1.__data__.user, "submit", tool1.__data__.submits, "rotate", tool1.__data__.rotate_view, "snapshot", tool1.__data__.snapshot)
+
+  toolsUsedNEW.svg.append("text")
+    .attr("class", "tool_highlight label")
+    .attr("text-anchor", "end")
+    .attr("x", 250)
+    .attr("y", -10)
+    .html(tool1.__data__.user + " checked their solution " + Math.round(tool1.__data__.submits) + " times per puzzle");
+
+  var dot2_array = toolsUsedNEW.dot2._groups[0];
+
+  for (var i = dot2_array.length - 1; i >= 0; i--) {
+    if (dot2_array[i].__data__ != d) {
+      d3.select(dot2_array[i])
+        .style("opacity", .05)
+    } else {
+      tool2 = dot2_array[i]
+      d3.select(dot2_array[i])
+        .style("opacity", 1)
+    }
+  }
+
+  toolsUsedNEW.svg.append("text")
+    .attr("class", "tool_highlight label")
+    .attr("text-anchor", "end")
+    .attr("x", 175)
+    .attr("y", 120)
+    .html(tool2.__data__.user + " took " + Math.round(tool2.__data__.snapshot) + " snapshots per puzzle");
+
+
+  var dot3_array = toolsUsedNEW.dot3._groups[0];
+
+  for (var i = dot3_array.length - 1; i >= 0; i--) {
+    if (dot3_array[i].__data__ != d) {
+      d3.select(dot3_array[i])
+        .style("opacity", .05)
+    } else {
+      tool3 = dot3_array[i]
+      d3.select(dot3_array[i])
+        .style("opacity", 1)
+    }
+  }
+
+  toolsUsedNEW.svg.append("text")
+    .attr("class", "tool_highlight label")
+    .attr("text-anchor", "end")
+    .attr("x", 235)
+    .attr("y", 225)
+    .html(tool3.__data__.user + " used the rotate view tool " + Math.round(tool3.__data__.rotate_view) + " times per puzzle");
+
   //highlight in circles
   var circle_array = toolsUsed.circle._groups[0];
 
   for (var i = circle_array.length - 1; i >= 0; i--) {
     if (circle_array[i].__data__ != d) {
       d3.select(circle_array[i])
-        .style("opacity", .2)
+        .style("opacity", .1)
     }
   }
 
   //highlight in bar chart
   var bar_array = activeTime.user._groups[0];
 
-  console.log(bar_array)
-
   for (var i = bar_array.length - 1; i >= 0; i--) {
     if (bar_array[i].__data__ != d) {
-      console.log("need to fade out ", bar_array[i])
       d3.select(bar_array[i])
-        .style("opacity", .2)
+        .style("opacity", .1)
     }
   }
 }
@@ -750,6 +1009,27 @@ function highlightStudent(d) {
 function unhighlightStudent(d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:<br>"
+  d3.select("#tools_used_NEW").selectAll(".tool_highlight").remove();
+
+
+  var dot_array = toolsUsedNEW.dot._groups[0];
+  var dot2_array = toolsUsedNEW.dot2._groups[0];
+  var dot3_array = toolsUsedNEW.dot3._groups[0];
+
+  for (var i = dot_array.length - 1; i >= 0; i--) {
+      d3.select(dot_array[i])
+        .style("opacity", .7)
+  }
+
+  for (var i = dot2_array.length - 1; i >= 0; i--) {
+      d3.select(dot2_array[i])
+        .style("opacity", .7)
+  }
+
+  for (var i = dot3_array.length - 1; i >= 0; i--) {
+      d3.select(dot3_array[i])
+        .style("opacity", .7)
+  }
 
   var circle_array = toolsUsed.circle._groups[0];
 
