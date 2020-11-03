@@ -71,8 +71,7 @@ function processData(data){
 	};
 
 	data.forEach(function(d){
-		console.log(d)
-		
+
 		//create active time keys
 		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed = d.reattempts_AF = 0
 
@@ -141,8 +140,6 @@ function processData(data){
 				}
 			}
 		}
-		console.log("num failed", d.num_failed, "attempts AF", d.reattempts_AF)
-
 
 
 

@@ -240,7 +240,7 @@ function initToolsUsed(data, tool) {
       break;
     case "snapshot": 
       tools_used.myScale = d3.scaleLinear()
-        .domain([0, 50])
+        .domain([0, 20])
         .range([0, 50]);
   }
 
@@ -830,7 +830,6 @@ function initFailedAttempts(data) {
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-    console.log(data)
     var x = d3.scaleLinear()
     .domain([0, d3.max(data, function(d) { return d.num_failed; }) + 3])
     .range([ 0, width]);
@@ -839,20 +838,34 @@ function initFailedAttempts(data) {
     .call(d3.axisBottom(x));
 
     var y = d3.scaleLinear()
-    .domain([0, d3.max(data, function(d) { return d.reattempts_AF; }) + 3])
+    .domain([0, d3.max(data, function(d) { return d.num_failed; }) + 3])
     .range([ height, 0]);
     failed_attempts.svg.append("g")
     .call(d3.axisLeft(y));
 
-    failed_attempts.svg.append('g')
-    .selectAll("dot")
-    .data(data)
-    .enter()
-    .append("circle")
+    var node = failed_attempts.svg.append('g')
+      .selectAll("dot")
+      .data(data)
+      .enter()
+
+
+    var circle_clicked = false;
+
+    failed_attempts.circle = node.append("circle")
       .attr("cx", function (d) { return x(d.num_failed); } )
       .attr("cy", function (d) { return y(d.reattempts_AF); } )
       .attr("r", function(d){ return 8 * (d.reattempts_AF / d.num_failed);})
       .style("fill", "orange")
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(d);
+          }
+        });
 
     failed_attempts.svg.append("text")
     .attr("class", "x label")
@@ -860,6 +873,8 @@ function initFailedAttempts(data) {
     .attr("x", (width / 2) + 50)
     .attr("y", height + 50)
     .text("Total failed puzzles");
+
+  return failed_attempts;
 
 }
 
@@ -925,6 +940,17 @@ function highlightStudent(d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:" + d.user
   
+  //highlight in reattempts viz
+
+  var reattempt_circle_array = failedAttempts.circle._groups[0];
+  
+  for (var i = reattempt_circle_array.length - 1; i >= 0; i--) {
+    if (reattempt_circle_array[i].__data__ != d) {
+      d3.select(reattempt_circle_array[i])
+        .style("opacity", .1)
+    }
+  }
+
   //highlight in tools used NEW
   var dot_array = toolsUsedNEW.dot._groups[0];
   var tool1;
@@ -941,8 +967,6 @@ function highlightStudent(d) {
         .style("opacity", 1)
     }
   }
-
-  console.log("user", tool1.__data__.user, "submit", tool1.__data__.submits, "rotate", tool1.__data__.rotate_view, "snapshot", tool1.__data__.snapshot)
 
   toolsUsedNEW.svg.append("text")
     .attr("class", "tool_highlight label")
@@ -1018,6 +1042,12 @@ function unhighlightStudent(d) {
   document.getElementById("student_highlight").innerHTML = "Student selected:<br>"
   d3.select("#tools_used_NEW").selectAll(".tool_highlight").remove();
 
+  var reattempt_circle_array = failedAttempts.circle._groups[0];
+  
+  for (var i = reattempt_circle_array.length - 1; i >= 0; i--) {
+      d3.select(reattempt_circle_array[i])
+        .style("opacity", 1)
+  }
 
   var dot_array = toolsUsedNEW.dot._groups[0];
   var dot2_array = toolsUsedNEW.dot2._groups[0];
