@@ -42,7 +42,7 @@ function initVis(data) {
 function initToolsUsed_NEW(data) {
 
   var margin = {top: 50, right:10, bottom: 100, left: 10},
-    width = 600 - margin.left - margin.right,
+    width = 400 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
   d3.select("#tools_used_NEW").selectAll("*").remove();
@@ -217,7 +217,7 @@ function initToolsUsed(data, tool) {
   }
 
   var margin = {top: 50, right:10, bottom: 100, left: 0},
-    width = 500 - margin.left - margin.right,
+    width = 400 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
   d3.select("#tools_used").selectAll("*").remove();
@@ -404,8 +404,8 @@ function initActiveTime(data) {
   var restoreXFlag = false; //restore order of bars back to original
 
 	var margin = {top: 10, right:10, bottom: 50, left: 50},
-      width = 600 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
+      width = 400 - margin.left - margin.right,
+      height = 300 - margin.top - margin.bottom;
 
     d3.select("#active_time").selectAll("*").remove();
 
@@ -815,8 +815,8 @@ function initActiveTime(data) {
 function initFailedAttempts(data) {
 
   var margin = {top: 50, right:10, bottom: 100, left: 30},
-    width = 500 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    width = 400 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
   d3.select("#failed_attempts").selectAll("*").remove();
 
@@ -830,18 +830,70 @@ function initFailedAttempts(data) {
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
+    var max_failed = d3.max(data, function(d) { return d.num_failed; })
+
     var x = d3.scaleLinear()
-    .domain([0, d3.max(data, function(d) { return d.num_failed; }) + 3])
+    .domain([0, max_failed + 3])
     .range([ 0, width]);
     failed_attempts.svg.append("g")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x));
 
     var y = d3.scaleLinear()
-    .domain([0, d3.max(data, function(d) { return d.num_failed; }) + 3])
+    .domain([0, max_failed + 3])
     .range([ height, 0]);
     failed_attempts.svg.append("g")
     .call(d3.axisLeft(y));
+
+    var line = d3.line()
+    var points = [[x(0), y(0)], [x(max_failed + 3), y(max_failed + 3)]]
+    var pathData = line(points);
+    failed_attempts.svg.append('path')
+      .attr('d', pathData)
+      .attr('stroke', "black")
+      .attr('opacity', ".3")
+
+    var Tooltip = d3.select("#failed_attempts")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0)
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "2px")
+      .style("border-radius", "5px")
+      .style("padding", "5px")
+      .style("height", "45px")
+      .style("width", "180px")
+
+    var mouseover = function(d) {
+      Tooltip
+        .style("opacity", 1)
+      d3.select(this)
+        .style("stroke", "black")
+    }
+    var mousemove = function(d) {
+      var ratio = Math.round((d.reattempts_AF / d.num_failed) * 100)
+
+      if (d.num_failed == 0){
+        Tooltip
+        .html(d.user + " did not fail any puzzles")
+        .style("left", (d3.mouse(this)[0]+ "px"))
+        .style("top", (d3.mouse(this)[1] + "px"))
+      }
+      else{
+        Tooltip
+        .html(d.user + " reattempted " + ratio + "% of the puzzles they failed")
+        .style("left", (d3.mouse(this)[0]+ "px"))
+        .style("top", (d3.mouse(this)[1] + "px"))
+      }
+      
+    }
+    var mouseleave = function(d) {
+      Tooltip
+        .style("opacity", 0)
+      d3.select(this)
+        .style("stroke", "none")
+    }
 
     var node = failed_attempts.svg.append('g')
       .selectAll("dot")
@@ -854,7 +906,11 @@ function initFailedAttempts(data) {
     failed_attempts.circle = node.append("circle")
       .attr("cx", function (d) { return x(d.num_failed); } )
       .attr("cy", function (d) { return y(d.reattempts_AF); } )
-      .attr("r", function(d){ return 8 * (d.reattempts_AF / d.num_failed);})
+      .attr("r", function(d){ 
+        if (d.num_failed == 0) {
+          return 8
+        }
+        return 8 * (d.reattempts_AF / d.num_failed);})
       .style("fill", "orange")
       //grey out non-clicked
       .on("click", function(d){
@@ -865,7 +921,10 @@ function initFailedAttempts(data) {
             circle_clicked = false;
             unhighlightStudent(d);
           }
-        });
+        })
+      .on("mouseover", mouseover)
+      .on("mousemove", mousemove)
+      .on("mouseleave", mouseleave);
 
     failed_attempts.svg.append("text")
     .attr("class", "x label")
