@@ -144,7 +144,7 @@ function initToolsUsed_NEW(data) {
       .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
       .attr("cy", 0)
       .attr("r", function (d) { return small_r(d.submits); } )
-      .style("fill", "#00CC00")
+      .style("fill", "#89C873")
       .style("opacity", ".7")
       .attr("stroke", "black")
       //grey out non-clicked
@@ -169,7 +169,7 @@ function initToolsUsed_NEW(data) {
       .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
       .attr("cy", (height / 2) - 50)
       .attr("r", function (d) { return small_r(d.snapshot); } )
-      .style("fill", "#00CC00")
+      .style("fill", "#89C873")
       .style("opacity", ".7")
       .attr("stroke", "black")
       //grey out non-clicked
@@ -194,7 +194,7 @@ function initToolsUsed_NEW(data) {
       .attr("cx", function (d) {return x(d.data[d.data.length - 1].cum_avg_perc_composite); } )
       .attr("cy", height - 100)
       .attr("r", function (d) { return r(d.rotate_view); } )
-      .style("fill", "#00CC00")
+      .style("fill", "#89C873")
       .style("opacity", ".7")
       .attr("stroke", "black")
       //grey out non-clicked
@@ -830,7 +830,8 @@ function initFailedAttempts(data) {
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-    var max_failed = d3.max(data, function(d) { return d.num_failed; })
+    var max_failed = d3.max(data, function(d) { return d.num_failed_att; })
+    var max_puzz = d3.max(data, function(d) { return d.num_failed_puzz; })
 
     var x = d3.scaleLinear()
     .domain([0, max_failed + 3])
@@ -840,18 +841,18 @@ function initFailedAttempts(data) {
     .call(d3.axisBottom(x));
 
     var y = d3.scaleLinear()
-    .domain([0, max_failed + 3])
+    .domain([0, max_puzz + 3])
     .range([ height, 0]);
     failed_attempts.svg.append("g")
     .call(d3.axisLeft(y));
 
-    var line = d3.line()
-    var points = [[x(0), y(0)], [x(max_failed + 3), y(max_failed + 3)]]
-    var pathData = line(points);
-    failed_attempts.svg.append('path')
-      .attr('d', pathData)
-      .attr('stroke', "black")
-      .attr('opacity', ".3")
+    // var line = d3.line()
+    // var points = [[x(0), y(0)], [x(max_failed + 3), y(max_failed + 3)]]
+    // var pathData = line(points);
+    // failed_attempts.svg.append('path')
+    //   .attr('d', pathData)
+    //   .attr('stroke', "black")
+    //   .attr('opacity', ".3")
 
     var Tooltip = d3.select("#failed_attempts")
       .append("div")
@@ -872,9 +873,9 @@ function initFailedAttempts(data) {
         .style("stroke", "black")
     }
     var mousemove = function(d) {
-      var ratio = Math.round((d.reattempts_AF / d.num_failed) * 100)
+      var ratio = Math.round((d.reattempts_AF / d.num_failed_att) * 100)
 
-      if (d.num_failed == 0){
+      if (d.num_failed_att == 0){
         Tooltip
         .html(d.user + " did not fail any puzzles")
         .style("left", (d3.mouse(this)[0]+ "px"))
@@ -904,14 +905,15 @@ function initFailedAttempts(data) {
     var circle_clicked = false;
 
     failed_attempts.circle = node.append("circle")
-      .attr("cx", function (d) { return x(d.num_failed); } )
-      .attr("cy", function (d) { return y(d.reattempts_AF); } )
-      .attr("r", function(d){ 
-        if (d.num_failed == 0) {
+      .attr("cx", function (d) { return x(d.num_failed_att); } )
+      .attr("cy", function (d) { return y(d.num_failed_puzz); } )
+      .attr("r", function(d){
+        console.log(d) 
+        if (d.num_failed_att == 0) {
           return 8
         }
-        return 8 * (d.reattempts_AF / d.num_failed);})
-      .style("fill", "orange")
+        return 8 * (d.reattempts_AF / d.num_failed_att);})
+      .style("fill", "#FF8601")
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
@@ -931,7 +933,7 @@ function initFailedAttempts(data) {
     .attr("text-anchor", "end")
     .attr("x", (width / 2) + 50)
     .attr("y", height + 50)
-    .text("Total failed puzzles");
+    .text("Total failed attempts");
 
   return failed_attempts;
 
@@ -948,7 +950,7 @@ function addPatterns(vis) {
     .attr('height', 4)
   .append('path')
     .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
-    .attr('stroke', '#3F8FD2')
+    .attr('stroke', '#65C1DA')
     .attr('stroke-width', 1);
 
   vis.svg.append('defs')
@@ -959,7 +961,7 @@ function addPatterns(vis) {
     .attr('height', 4)
   .append('path')
     .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
-    .attr('stroke', '#FFC000')
+    .attr('stroke', '#FFCC05')
     .attr('stroke-width', 1);
 
   vis.svg.append('defs')
@@ -970,7 +972,7 @@ function addPatterns(vis) {
     .attr('height', 4)
   .append('path')
     .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
-    .attr('stroke', '#FF4C00')
+    .attr('stroke', '#FC0160')
     .attr('stroke-width', 1);
 
     return vis;
@@ -984,13 +986,13 @@ function getVisInfo() {
     detail = true;
     keys = ["AT_1_P", "AT_2_P", "AT_3_P", "AT_1_F", "AT_2_F", "AT_3_F"]
     color.domain(keys)
-    color.range(["#3F8FD2", "#FFC000", "#FF4C00", 'url(#diagonalHatchE)', 'url(#diagonalHatchM)', 'url(#diagonalHatchH)'])}
+    color.range(["#65C1DA", "#FFCC05", "#FC0160", 'url(#diagonalHatchE)', 'url(#diagonalHatchM)', 'url(#diagonalHatchH)'])}
     // color.range(["#3F8FD2", "#3F8FD2", "#FFC000", "#FFC000", "#FF4C00", "#FF4C00"])}
   else {
     detail = false;
     keys = ["AT_1", "AT_2", "AT_3"]
     color.domain(keys)
-    color.range(["#3F8FD2", "#FFC000", "#FF4C00"])}
+    color.range(["#65C1DA", "#FFCC05", "#FC0160"])}
 
   return {detail: detail, keys: keys, color: color};
 }
