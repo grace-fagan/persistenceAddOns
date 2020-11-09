@@ -186,7 +186,7 @@ function initToolsUsed_NEW(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
@@ -211,7 +211,7 @@ function initToolsUsed_NEW(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
@@ -236,7 +236,7 @@ function initToolsUsed_NEW(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
@@ -365,7 +365,7 @@ function initToolsUsed(data, tool) {
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
@@ -509,11 +509,27 @@ function initActiveTime(data) {
   //set x and y domains
   data.sort(function(a, b) {return -a.total + b.total;});
   x.domain(data.map(function(d){ return d.user; }));
-  y.domain([0, d3.max(data, function(d) { return d.total; })]).nice()
+  y.domain([0, d3.max(data, function(d) { return d.total; })])
 
   //set x and y axis
     var xAxis = d3.axisBottom(x).tickFormat(function(d){ return d;});
-    var yAxis = d3.axisLeft(y);
+    var yAxis = d3.axisLeft(y).tickFormat(function(d){
+      // Hours, minutes and seconds
+      var hrs = ~~(d / 3600);
+      var mins = ~~((d % 3600) / 60);
+      var secs = ~~d % 60;
+
+      // Output like "1:01" or "4:03:59" or "123:03:59"
+      var ret = "";
+
+      if (hrs > 0) {
+          ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+      }
+
+      ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+      ret += "" + secs;
+      return ret;
+    });
 
   //Draw x and y-axis
   active_time.svg.append("g")
@@ -543,7 +559,7 @@ function initActiveTime(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (bar_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
 
           bar_clicked = true;
         } else {
@@ -952,7 +968,7 @@ function initFailedAttempts(data) {
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(d);
+          highlightStudent(data, d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
@@ -1174,11 +1190,11 @@ function getVisInfo() {
   return {detail: detail, keys: keys, color: color};
 }
 
-function highlightStudent(d) {
+function highlightStudent(data, d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:" + d.user
   
-  highlightStudentMap(d);
+  // highlightStudentMap(d);
   
   // highlight in reattempts viz
 
@@ -1189,6 +1205,30 @@ function highlightStudent(d) {
       d3.select(reattempt_circle_array[i])
         .style("opacity", .1)
     }
+  }
+
+  function class_avg(tool) {
+    
+    return 60 * (data.reduce(function (total, user){
+      return total + user[tool]}, 0) / data.length)
+  }
+
+  function getPercentageChange(avg, student){
+    var sign;
+    var decreaseValue = avg - student;
+    var percentChange = (decreaseValue / ((avg + student) / 2)) * 100;
+
+    if (Math.sign(percentChange) == 1)
+      sign = "less"
+    else
+      sign = "more"
+
+    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
+  }
+
+  function change(tool) {
+    var change = getPercentageChange(class_avg(tool), (60 * d[tool]))
+    return (change.PC + "% " + change.sign)
   }
 
   //highlight in tools used NEW
@@ -1211,9 +1251,11 @@ function highlightStudent(d) {
   toolsUsedNEW.svg.append("text")
     .attr("class", "tool_highlight label")
     .attr("text-anchor", "end")
-    .attr("x", 250)
+    .attr("x", 270)
     .attr("y", -10)
-    .html(tool1.__data__.user + " checked their solution " + Math.round(tool1.__data__.submits) + " times per puzzle");
+    .html(Math.round(tool1.__data__.submits) + " check solutions per puzzle, " + change("submits") + " than average.");
+
+  console.log(data)
 
   var dot2_array = toolsUsedNEW.dot2._groups[0];
 
@@ -1231,9 +1273,9 @@ function highlightStudent(d) {
   toolsUsedNEW.svg.append("text")
     .attr("class", "tool_highlight label")
     .attr("text-anchor", "end")
-    .attr("x", 175)
+    .attr("x", 250)
     .attr("y", 120)
-    .html(tool2.__data__.user + " took " + Math.round(tool2.__data__.snapshot) + " snapshots per puzzle");
+    .html(Math.round(tool2.__data__.snapshot) + " snapshots per puzzle, " + change("snapshot") + " than average.");
 
 
   var dot3_array = toolsUsedNEW.dot3._groups[0];
@@ -1252,9 +1294,9 @@ function highlightStudent(d) {
   toolsUsedNEW.svg.append("text")
     .attr("class", "tool_highlight label")
     .attr("text-anchor", "end")
-    .attr("x", 235)
+    .attr("x", 250)
     .attr("y", 225)
-    .html(tool3.__data__.user + " used the rotate view tool " + Math.round(tool3.__data__.rotate_view) + " times per puzzle");
+    .html(Math.round(tool3.__data__.rotate_view) + " rotate views per puzzle, " + change("rotate_view") + " than average.");
 
   //highlight in circles
   // var circle_array = toolsUsed.circle._groups[0];
