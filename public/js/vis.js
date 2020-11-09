@@ -124,9 +124,8 @@ function initToolsUsed_NEW(data) {
       .range([0, 50]);
 
   var x = d3.scaleLinear()
-    .domain([20, 100])
+    .domain([d3.min(data, function(d) {return d.data[d.data.length - 1].cum_avg_perc_composite - 2; }), d3.max(data, function(d) {return d.data[d.data.length - 1].cum_avg_perc_composite + 2; })])
     .range([ 0, width]);
-
 
   tools_used_NEW.svg.append("g")
     .attr("transform", "translate(0," + (height - 50) + ")")
@@ -868,6 +867,7 @@ function initFailedAttempts(data) {
 
     var max_failed = d3.max(data, function(d) { return d.num_failed_att; })
     var max_puzz = d3.max(data, function(d) { return d.num_failed_puzz; })
+    var max_reattemptsAF = d3.max(data, function(d) { return d.reattempts_AF; })
 
     var x = d3.scaleLinear()
     .domain([0, max_failed + 3])
@@ -877,18 +877,19 @@ function initFailedAttempts(data) {
     .call(d3.axisBottom(x));
 
     var y = d3.scaleLinear()
-    .domain([0, max_puzz + 3])
+    .domain([0, max_failed + 3])
     .range([ height, 0]);
     failed_attempts.svg.append("g")
     .call(d3.axisLeft(y));
 
-    // var line = d3.line()
-    // var points = [[x(0), y(0)], [x(max_failed + 3), y(max_failed + 3)]]
-    // var pathData = line(points);
-    // failed_attempts.svg.append('path')
-    //   .attr('d', pathData)
-    //   .attr('stroke', "black")
-    //   .attr('opacity', ".3")
+    var line = d3.line()
+    var points = [[x(0), y(0)], [x(max_failed + 3), y(max_failed + 3)]]
+    var pathData = line(points);
+    failed_attempts.svg.append('path')
+      .attr('d', pathData)
+      .attr('stroke', "black")
+      .attr('opacity', ".3")
+
 
     var Tooltip = d3.select("#failed_attempts")
       .append("div")
@@ -941,7 +942,7 @@ function initFailedAttempts(data) {
 
     failed_attempts.circle = node.append("circle")
       .attr("cx", function (d) { return x(d.num_failed_att); } )
-      .attr("cy", function (d) { return y(d.num_failed_puzz); } )
+      .attr("cy", function (d) { return y(d.reattempts_AF); } )
       .attr("r", function(d){
         if (d.num_failed_att == 0) {
           return 8
@@ -975,7 +976,7 @@ function initFailedAttempts(data) {
     .attr("y", 5)
     .attr("dy", "-4em")
     .attr("transform", "rotate(-90)")
-    .text("Num failed puzzles");
+    .text("Num reattempts");
 
   return failed_attempts;
 
@@ -1177,8 +1178,9 @@ function highlightStudent(d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:" + d.user
   
-  // highlightStudentMap(d);
-  //highlight in reattempts viz
+  highlightStudentMap(d);
+  
+  // highlight in reattempts viz
 
   var reattempt_circle_array = failedAttempts.circle._groups[0];
   

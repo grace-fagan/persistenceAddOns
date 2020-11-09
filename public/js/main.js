@@ -148,6 +148,28 @@ function processData(data){
 			}
 		}
 
+		// d.byPuzzle = []
+		// Object.keys(puzzle_categories).forEach(function(d){
+		// 	var puzzle = new Object()
+		// 	puzzle["task_id"] = d
+		// 	puzzle["fails"] = 0
+		// 	puzzle["reattempts_AF"] = 0
+		// 	(d.byPuzzle).push(puzzle)
+		// })
+
+		// d.data.forEach(function(d){
+		// 	var task_id = d.task_id
+
+		// 	for (var i in byPuzzle){
+		// 		if (d.byPuzzle[i].task_id == task_id) {
+		// 			if (attempt.completed == 0){
+		// 				d.byPuzzle[i].fails ++;
+		// 			}
+
+		// 			d.byPuzzle[i].reattempts_AF += attempt.reattempt_AF;
+		// 		}
+		// 	}
+		// })
 	})
 
 	byPuzzle = []
