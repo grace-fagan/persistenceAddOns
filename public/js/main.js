@@ -22,7 +22,7 @@ function selectGroup(group){
 			idx++
 		}
 			
-	  	processData(data);
+	  	data = processData(data);
 	  	createVis(data);
 
 	}
@@ -32,6 +32,8 @@ function selectGroup(group){
 }
 
 function processData(data){
+
+	new_data = []
 
 	var puzzle_categories = new Object();
 
@@ -72,7 +74,7 @@ function processData(data){
 
 	data.forEach(function(d){
 
-		//create active time keys
+		//create keys
 		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed_att = d.num_failed_puzz = d.reattempts_AF = 0
 
 		for (var i in d.data){
@@ -124,17 +126,21 @@ function processData(data){
 			var attempt = d.data[i]
 			if (failed_puzzles.includes(attempt.task_id)) {
 				if (attempt.completed == 1) {
+					d.data[i].reattempt_AF = 1;
 					d.reattempts_AF ++;
 					//remove from failed puzzles array
 					failed_puzzles.splice(failed_puzzles.indexOf(attempt.task_id), 1);
 				} else {
+					d.data[i].reattempt_AF = 1;
 					d.num_failed_att ++;
 					d.reattempts_AF ++;
 				}
 			} else {
 				if (attempt.completed == 1) {
+					d.data[i].reattempt_AF = 0;
 					continue;
 				} else {
+					d.data[i].reattempt_AF = 0;
 					d.num_failed_att ++;
 					d.num_failed_puzz ++;
 					failed_puzzles.push(attempt.task_id)
@@ -142,18 +148,43 @@ function processData(data){
 			}
 		}
 
-
-
 	})
+
+	byPuzzle = []
+	Object.keys(puzzle_categories).forEach(function(d){
+		var puzzle = new Object()
+		puzzle["task_id"] = d
+		puzzle["fails"] = 0
+		puzzle["reattempts_AF"] = 0
+		byPuzzle.push(puzzle)
+	})
+
+	data.forEach(function(d){
+		for (var i in d.data){
+			var attempt = d.data[i]
+			var task_id = attempt.task_id
+
+			for (var i in byPuzzle){
+				if (byPuzzle[i].task_id == task_id) {
+					if (attempt.completed == 0){
+						byPuzzle[i].fails ++;
+					}
+
+					byPuzzle[i].reattempts_AF += attempt.reattempt_AF;
+				}
+			}
+		}
+	})
+
+	new_data.push(data)
+	new_data.push(byPuzzle)
+
+	return new_data;
 
 }
 
 function createVis(data) {
 
 	var vis = initVis(data);
-
-	// activeTime = new activeTime("active_time", data)
-	// toolsUsed = new toolsUsed("tools_used", data)
-	// snapshotUsed = new snapshotUsed("snapshot_used", data)
 
 }
