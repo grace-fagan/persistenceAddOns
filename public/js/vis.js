@@ -1022,7 +1022,7 @@ function initFailedAttemptsMap(data) {
   // var number = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
   var x = d3.scaleBand()
-    .range([ 35, width ])
+    .range([ 0, width ])
     .domain(Object.keys(puzzle_categories))
     .padding(0.01);
     
@@ -1037,7 +1037,12 @@ function initFailedAttemptsMap(data) {
 
   var myColor = d3.scaleLinear()
   .range(["#f7f7f7", "#FF8601"])
-  .domain([0, d3.max(data[1], function(d) { return d.reattempts_AF; })])
+  .domain([0, d3.max(data[1], function(d) { 
+    if (d.reattempts_AF == 0){
+      return 0
+    } else {
+      return (d.fails / d.reattempts_AF)
+    }})])
 
   var Tooltip = d3.select("#failed_attemptsMAP")
     .append("div")
@@ -1080,43 +1085,45 @@ function initFailedAttemptsMap(data) {
   .attr("width", x.bandwidth() )
   .attr("height", height)
   .style("fill", function(d) { 
-    // if (d.fails != 0 && d.reattempts_AF == 0){
-    //   return 'url(#diagonalHatchMAP)'
-    // }
-    return myColor(d.fails)} )
+    if (d.fails == 0 && d.reattempts_AF == 0){
+        return "#f7f7f7"
+    } else if (d.reattempts_AF == 0) {
+        return myColor(d.fails)
+    }
+    return myColor(d.fails / d.reattempts_AF)} )
   .on("mouseover", mouseover)
   .on("mousemove", mousemove)
   .on("mouseleave", mouseleave);
 
-  failed_attempts_map.svg.append("text")
-    .attr("class", "x label")
-    .attr("text-anchor", "end")
-    .attr("x", 25)
-    .attr("y", height)
-    .text("Fails");
+  // failed_attempts_map.svg.append("text")
+  //   .attr("class", "x label")
+  //   .attr("text-anchor", "end")
+  //   .attr("x", 30)
+  //   .attr("y", height)
+  //   .text("Reattempts / Fails");
 
-  var ReAttemptMap = failed_attempts_map.svg.selectAll()
-  .data(data[1])
-  .enter().append("rect")
-  .attr("x", function(d) {return x(d.task_id)})
-  .attr("y", 30)
-  .attr("width", x.bandwidth() )
-  .attr("height", height)
-  .style("fill", function(d) { 
-    // if (d.fails != 0 && d.reattempts_AF == 0){
-    //   return 'url(#diagonalHatchMAP)'
-    // }
-    return myColor(d.reattempts_AF)} )
-  .on("mouseover", mouseover)
-  .on("mousemove", mousemove)
-  .on("mouseleave", mouseleave);
+  // var ReAttemptMap = failed_attempts_map.svg.selectAll()
+  // .data(data[1])
+  // .enter().append("rect")
+  // .attr("x", function(d) {return x(d.task_id)})
+  // .attr("y", 30)
+  // .attr("width", x.bandwidth() )
+  // .attr("height", height)
+  // .style("fill", function(d) { 
+  //   // if (d.fails != 0 && d.reattempts_AF == 0){
+  //   //   return 'url(#diagonalHatchMAP)'
+  //   // }
+  //   return myColor(d.reattempts_AF)} )
+  // .on("mouseover", mouseover)
+  // .on("mousemove", mousemove)
+  // .on("mouseleave", mouseleave);
 
-  failed_attempts_map.svg.append("text")
-    .attr("class", "x label")
-    .attr("text-anchor", "end")
-    .attr("x", 30)
-    .attr("y", height + 25)
-    .text("Reattempts");
+  // failed_attempts_map.svg.append("text")
+  //   .attr("class", "x label")
+  //   .attr("text-anchor", "end")
+  //   .attr("x", 30)
+  //   .attr("y", height + 25)
+  //   .text("Reattempts");
 
   return failed_attempts_map;
 }
