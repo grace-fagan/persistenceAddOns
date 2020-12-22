@@ -38,7 +38,6 @@ function processData(data){
 	var puzzle_categories = new Object();
 
 	puzzle_categories = {
-    "Sandbox" : 0,
     "One Box" : 1,
     "Separated Boxes" : 1,
     "Rotate a Pyramid" : 1,
@@ -55,9 +54,9 @@ function processData(data){
     "Pyramids are Strange" : 2,
     "Boxes Obscure Spheres" : 2,
     "Object Limits" : 2,
-    "Not Bird" : 3,
     "Angled Silhouette" : 2,
     "Warm Up" : 2,
+    "Not Bird" : 3,
     "Stranger Shapes" : 3,
     "Sugar Cones" : 3,
     "Tall and Small" : 3,
@@ -69,14 +68,15 @@ function processData(data){
     "Few Clues" : 3,
     "Orange Dance" : 3,
     "Bear Market" : 3,
-    "Tetromino" : 0
 	};
 
 	data.forEach(function(d){
 
 		//create keys
 		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed_att = d.num_failed_puzz = d.reattempts_AF = 0
+		d.byPuzzle = []
 
+		//add puzzle difficulty and active time by category metrics
 		for (var i in d.data){
 			var attempt = d.data[i]
 			var task_id = attempt.task_id
@@ -121,6 +121,7 @@ function processData(data){
 		}
 
 		var failed_puzzles = []
+		
 		//Reattempts after failure
 		for (var i in d.data){
 			var attempt = d.data[i]
@@ -148,28 +149,29 @@ function processData(data){
 			}
 		}
 
-		// d.byPuzzle = []
-		// Object.keys(puzzle_categories).forEach(function(d){
-		// 	var puzzle = new Object()
-		// 	puzzle["task_id"] = d
-		// 	puzzle["fails"] = 0
-		// 	puzzle["reattempts_AF"] = 0
-		// 	(d.byPuzzle).push(puzzle)
-		// })
+		//populate byPuzzle array (individual student view)
+		Object.keys(puzzle_categories).forEach(function(p){
+			var puzzle = new Object()
+			puzzle["task_id"] = p
+			puzzle["fails"] = 0
+			puzzle["reattempts_AF"] = 0
+			puzzleArray = d.byPuzzle
+			puzzleArray.push(puzzle)
+		})
 
-		// d.data.forEach(function(d){
-		// 	var task_id = d.task_id
+		d.data.forEach(function(a){
+			var task_id = a.task_id
 
-		// 	for (var i in byPuzzle){
-		// 		if (d.byPuzzle[i].task_id == task_id) {
-		// 			if (attempt.completed == 0){
-		// 				d.byPuzzle[i].fails ++;
-		// 			}
+			for (var i in d.byPuzzle){
+				if (d.byPuzzle[i].task_id == task_id) {
+					if (a.completed == 0){
+						d.byPuzzle[i].fails ++;
+					}
 
-		// 			d.byPuzzle[i].reattempts_AF += attempt.reattempt_AF;
-		// 		}
-		// 	}
-		// })
+					d.byPuzzle[i].reattempts_AF += a.reattempt_AF;
+				}
+			}
+		})
 	})
 
 	byPuzzle = []
@@ -181,6 +183,7 @@ function processData(data){
 		byPuzzle.push(puzzle)
 	})
 
+	//populate byPuzzle array (class view)
 	data.forEach(function(d){
 		for (var i in d.data){
 			var attempt = d.data[i]
@@ -202,7 +205,6 @@ function processData(data){
 	new_data.push(byPuzzle)
 
 	return new_data;
-
 }
 
 function createVis(data) {
