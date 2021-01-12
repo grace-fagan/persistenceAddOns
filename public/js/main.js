@@ -3,6 +3,7 @@ var toolsUsed;
 
 var url = window.location
 
+//API class selection
 function selectGroup(group){
 
 	var request = new XMLHttpRequest()
@@ -30,6 +31,7 @@ function selectGroup(group){
 	request.send()
 
 }
+
 
 function processData(data){
 
@@ -70,16 +72,19 @@ function processData(data){
     "Bear Market" : 3,
 	};
 
+	//each ~student~
 	data.forEach(function(d){
 
-		//create keys
+		//create keys for difficulty and pass/fail time
 		d.AT_1_P = d.AT_1_F = d.AT_2_P = d.AT_2_F = d.AT_3_P = d.AT_3_F = d.active_time = d.num_failed_att = d.num_failed_puzz = d.reattempts_AF = 0
 		d.byPuzzle = []
 
-		//add puzzle difficulty and active time by category metrics
+		//add puzzle difficulty and active time by category
 		for (var i in d.data){
+
 			var attempt = d.data[i]
 			var task_id = attempt.task_id
+
 			if (task_id[1] == ".")
 				task_id = task_id.slice(3, (task_id.length))
 				attempt.task_id = task_id

@@ -1,10 +1,11 @@
-//Global variables
+//global variables for viz objects
 var activeTime;
 var toolsUsed;
 var toolsUsedNew;
 var failedAttempts;
 var failedAttemptsMap;
 
+//puzzle difficulty categories used for active time viz
 var puzzle_categories = new Object();
 
   puzzle_categories = {
@@ -40,223 +41,45 @@ var puzzle_categories = new Object();
     "Bear Market" : 3,
   };
 
-// function getTool(tool){
-//   tool = tool
-//   if (Data != null){
-//     toolsUsed = initToolsUsed(Data, tool)
-//   }
-// }
-
 function initVis(data) {
 
-  console.log(data)
-
-	//disable sort checkbox
+	//disable active time sort checkbox
 	d3.select(".sort")             
 	  .select("input")
 	  .property("disabled", true)
 	  .property("checked", false);
 
-	//detail checkbox
+	//successful/unsuccessful checkbox
 	d3.select(".detail")
 	  .select("input")
 	  .property("checked", false);
 
-  // d3.select(".tools")
-  //   .select("select")
-  //   .property("onchange", getTool(this.value))
-
+  //individual viz objects
 	activeTime = initActiveTime(data);
-  toolsUsedNEW = initToolsUsed_OLD(data);
-  // toolsUsed = initToolsUsed(data[0], "rotate_view");
+  toolsUsedNEW = initToolsUsed(data);
   failedAttempts = initFailedAttempts(data);
   failedAttemptsMap = initFailedAttemptsMap(data[1]);
 }
 
-function initToolsUsed_NEW(data) {
-
-  var margin = {top: 50, right:10, bottom: 100, left: 30},
-    width = 400 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
-
-  d3.select("#tools_used_NEW").selectAll("*").remove();
-
-  //allocate space for viz
-  var tools_used_NEW = d3.select("#tools_used_NEW");
-
-  tools_used_NEW.svg = tools_used_NEW.append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-
-  (data[0]).forEach(function(d){
-      d.n_rotate_view = d.data.reduce(function (total, attempt){
-                        return total + attempt.n_rotate_view}, 0)
-
-      d.n_snapshot = d.data.reduce(function (total, attempt){
-                        return total + attempt.n_snapshot}, 0)
-
-      d.n_submits = d.data.reduce(function (total, attempt){
-                        return total + attempt.n_check_solution}, 0)
-
-      d.active_time = d.data.reduce(function (total, attempt){
-                        return total + attempt.active_time}, 0)
-
-      d.num_attempts = d.data.length
-
-      d.rotate_view = (d.n_rotate_view / d.num_attempts)
-      d.snapshot = (d.n_snapshot / d.num_attempts)
-      d.total_tools = ((d.n_rotate_view + d.n_snapshot + d.n_submits) / d.num_attempts)
-      d.submits = (d.n_submits / d.num_attempts)
-      d.per_score = d.data[d.data.length - 1].cum_avg_perc_composite})
-
-  function class_avg(tool) {
-      return ((data[0].reduce(function (total, user){
-      return total + user[tool]}, 0)) / data[0].length)
-  }
-
-  //set x and y ranges
-  var x = d3.scaleBand()
-    .rangeRound([0, width])
-    .padding(.15)
-  // vis.x = d3.scaleOrdinal()
-  //   .rangeRoundBands([0, vis.width], .2);
-
-  var y = d3.scaleLinear()
-    .rangeRound([height, 0]);
-
-  //set x and y domains
-  data[0].sort(function(a, b) {return -a.total_tools + b.total_tools;});
-  x.domain(data[0].map(function(d){ return d.user; }));
-  y.domain([0, d3.max(data[0], function(d) { return d.total_tools; })])
-
-  //Draw x and y-axis
-  tools_used_NEW.svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .selectAll("text")  
-          .attr("dx", "-1.5em")
-          .attr("dy", "0em")
-        .attr("transform", "rotate(-65)")
-
-  tools_used_NEW.svg.append("g")
-      .attr("class", "y axis")
-      .attr("transform", "translate(0,0)")
-      .call(d3.axisLeft(y));
-
-  var circle_clicked = false;
-
-  var node = tools_used_NEW.svg.append("g")
-    .selectAll("dot")
-    .data(data[0])
-
-  var elemEnter = node.enter()
-    .append("g")
-
-  tools_used_NEW.dot = elemEnter.append("circle")
-      .attr("cx", function (d) {return x(d.user)})
-      .attr("cy", function(d) {return y(d.submits)})
-      .attr("r", function (d) { return 4} )
-      .style("fill", function(d){
-        if (d.submits < class_avg("submits")){ return '#CB0950'}
-        else { return '#89C873'}})
-      .style("opacity", ".7")
-      // .attr("stroke", "black")
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-
-  var node2 = tools_used_NEW.svg.append("g")
-    .selectAll("dot")
-    .data(data[0])
-
-  var elemEnter2 = node2.enter()
-    .append("g")
-
-  tools_used_NEW.dot2 = elemEnter2.append("path")
-      .attr("class", "point")
-      .attr("d", d3.symbol().type(d3.symbolTriangle))
-      .attr("transform", function(d) { return "translate(" + x(d.user) + "," + y(d.snapshot) + ")"; })
-      // .attr("cx", function (d) {return x(d.user)})
-      // .attr("cy", function(d){return y(d.snapshot)})
-      // .attr("r", function (d) { return 4; } )
-      .style("fill", function(d){
-        if (d.snapshot < class_avg("snapshot")){ return '#CB0950'}
-        else { return '#89C873'}})
-      .style("opacity", ".7")
-      // .attr("stroke", "black")
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-
-  var node3 = tools_used_NEW.svg.append("g")
-    .selectAll("circle")
-    .data(data[0])
-
-  var elemEnter3 = node3.enter()
-    .append("g")
-
-  tools_used_NEW.dot2 = elemEnter2.append("path")
-      .attr("class", "point")
-      .attr("d", d3.symbol().type(d3.symbolSquare).size(100))
-      .attr("transform", function(d) { return "translate(" + x(d.user) + "," + y((d.rotate_view)) + ")"; })
-      // .attr("cx", function (d) {return x(d.user)})
-      // .attr("cy", function(d) {return y(d.rotate_view)})
-      // .attr("r", function (d) { return 4} )
-      .style("fill", function(d){
-        if (d.rotate_view < class_avg("rotate_view")){ return '#CB0950'}
-        else { return '#89C873'}})
-      .style("opacity", ".7")
-      // .attr("stroke", "black")
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-
-  return tools_used_NEW
-}
-
-function initToolsUsed_OLD(data) {
+function initToolsUsed(data) {
 
   var margin = {top: 50, right:10, bottom: 100, left: 10},
     width = 400 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
-  d3.select("#tools_used_NEW").selectAll("*").remove();
+  d3.select("#tools_used").selectAll("*").remove();
 
   //allocate space for viz
-  var tools_used_NEW = d3.select("#tools_used_NEW");
+  var tools_used = d3.select("#tools_used");
 
-  tools_used_NEW.svg = tools_used_NEW.append("svg")
+  tools_used.svg = tools_used.append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
+  //get total number of tool use for each student
   (data[0]).forEach(function(d){
     d.n_rotate_view = d.data.reduce(function (total, attempt){
                       return total + attempt.n_rotate_view}, 0)
@@ -267,36 +90,19 @@ function initToolsUsed_OLD(data) {
     d.n_submits = d.data.reduce(function (total, attempt){
                       return total + attempt.n_check_solution}, 0)
 
-    d.active_time = d.data.reduce(function (total, attempt){
-                      return total + attempt.active_time}, 0)
-
     d.num_attempts = d.data.length
 
+    //tool use per attempt for each student
     d.rotate_view = (d.n_rotate_view / d.num_attempts)
     d.snapshot = (d.n_snapshot / d.num_attempts)
     d.submits = (d.n_submits / d.num_attempts)
-    d.total_tools = ((d.n_rotate_view + d.n_snapshot + d.n_submits) / d.num_attempts)
+    
+    //d.per_score shows the final accumulated composite score
     d.per_score = d.data[d.data.length - 1].cum_avg_perc_composite
 
   })
 
-  function class_avg(tool) {
-      return ((data[0].reduce(function (total, user){
-      return total + user[tool]}, 0)) / data[0].length)
-  }
-
-  console.log("avg submits: ", class_avg("submits"))
-  console.log("avg snapshots: ", class_avg("snapshot"))
-  console.log("avg rotates: ", class_avg("rotate_view"))
-
-
-  var min_score = d3.min(data[0], function(d) {return d.per_score; })
-  var max_score = d3.max(data[0], function(d) {return d.per_score; })
-
-  var r = d3.scaleLinear()
-      .domain([min_score, max_score])
-      .range([4, 15]);
-
+  //create axis for each tool
   function toolAxis(tool) {
     var x = d3.scaleLinear()
     .domain([0, d3.max(data[0], function(d) {return d[tool]; })]).nice()
@@ -311,95 +117,50 @@ function initToolsUsed_OLD(data) {
     .call(d3.axisLeft(y))
   
 
-  // var histogram = d3.histogram()
-  //   .value(function(d) { return d.per_score; })
-  //   .domain(x.domain())
-  //   .thresholds(x.ticks(5))
-
-  // var binned_students = histogram(data);
-  // console.log(binned_students)
-
-  // var simulation = d3.forceSimulation()
-  //     .force("center", d3.forceCenter().x(0).y(0)) // Attraction to the center of the svg area
-  //     .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
-  //     .force("collide", d3.forceCollide().strength(.2).radius(function(d){return r(d.rotate_view) + 5}).iterations(1)) // Force that avoids circle overlapping
-
-  // tools_used_NEW.svg.selectAll("g")
-  //   .data(binned_students).enter().append("g")
-  //   .attr("transform", function(d) { return "translate(" + x(d.x0) + ","  + 0 + ")"; })
-  //   .each(function(d){
-  //     var elemEnter = d3.select(this).selectAll("circle").data(d).enter()
-  //     tools_used_NEW.circle = elemEnter.append('circle')
-  //     .attr("r", function (d) { return r(d.rotate_view); } )
-  //     .attr("cx", function(d) {return d.x0})
-  //     .attr("cy", function(d) {return 10})})
-
-  // binned_students.forEach(function(d){
-  //   console.log(d)
-  //   simulation
-  //     .nodes(d)
-  //     .on("tick", function(){
-  //       tools_used_NEW.circle
-  //           .attr("cx", function(d){ return d.x; })
-  //           .attr("cy", function(d){ return d.y; })
-  //        })
-  // })
-
-  tools_used_NEW.svg.append("g")
+  tools_used.svg.append("g")
     .attr("transform", "translate(0," + (height - 50) + ")")
     .call(d3.axisBottom(toolAxis('rotate_view')));
 
-  tools_used_NEW.svg.append("g")
+  tools_used.svg.append("g")
     .attr("transform", "translate(0," + 40 + ")")
     .call(d3.axisBottom(toolAxis('submits')));
 
-  tools_used_NEW.svg.append("g")
+  tools_used.svg.append("g")
     .attr("transform", "translate(0," + (height / 2) + ")")
     .call(d3.axisBottom(toolAxis('snapshot')));
 
-  // tools_used_NEW.svg.append("text")
-  //   .attr("class", "x label")
-  //   .attr("text-anchor", "end")
-  //   .attr("x", (width / 2) + 50)
-  //   .attr("y", height)
-  //   .text("Composite Persistence score");
-
-  tools_used_NEW.svg.append("text")
+  tools_used.svg.append("text")
     .attr("class", "circle label")
     .attr("text-anchor", "end")
     .attr("x", 75)
     .attr("y", - 25)
     .text("Check solution");
 
-  tools_used_NEW.svg.append("text")
+  tools_used.svg.append("text")
     .attr("class", "circle label")
     .attr("text-anchor", "end")
-    .attr("x", 50)
+    .attr("x", 45)
     .attr("y", (height / 2) - 75)
     .text("Snapshot");
 
-  tools_used_NEW.svg.append("text")
+  tools_used.svg.append("text")
     .attr("class", "circle label")
     .attr("text-anchor", "end")
     .attr("x", 50)
     .attr("y", height - 140)
     .text("Rotate View");
 
-  var myColor = d3.scaleLinear()
-  .range(["#d0ecf3", "#65C1DA"])
-  .domain([0, d3.max(data, function(d) {
-    return d.fails
-  })])
-
+  //color scale for below the mean
   function belowColorScale(toolName, tool) {
     var belowColor = d3.scaleLinear()
-    .range(['#efb5ca','#CB0950'])
+    .range(['#ddbedf','#AA5DAF'])
     .domain([class_avg(toolName), (d3.min(data[0], function(d) {
     return d[toolName]}))])
     
     return belowColor(tool)
   }
 
+  //color scale for above the mean
   function aboveColorScale(toolName, tool) {
     var aboveColor = d3.scaleLinear()
     .range(['#b2e7c6','#00B242'])
@@ -409,166 +170,28 @@ function initToolsUsed_OLD(data) {
     return aboveColor(tool)
   }
 
-  var circle_clicked = false;
-
-  var node = tools_used_NEW.svg.append("g")
-    .selectAll("dot")
-    .data(data[0])
-
-  var elemEnter = node.enter()
-    .append("g")
-
-  tools_used_NEW.dot = elemEnter.append("circle")
-      .attr("cx", function (d) {
-        var x = toolAxis('submits')
-        return x(d.submits); } )
-      .attr("cy", 0)
-      // .attr("cy", function(d) {
-      //   return -(d.total_tools) + 35})
-      .attr("r", function (d) { return 9; } )
-      // .style("fill", "none")
-      .style("fill", function(d){
-        if (d.submits < class_avg("submits")){ 
-          return belowColorScale("submits", d.submits)}
-        else { return aboveColorScale("submits", d.submits)}})
-      // .attr('stroke-width', 4)
-      .style("opacity", .7)
-      .attr("stroke", "black")
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-
-  var node2 = tools_used_NEW.svg.append("g")
-    .selectAll("dot")
-    .data(data[0])
-
-  var elemEnter2 = node2.enter()
-    .append("g")
-
-  tools_used_NEW.dot2 = elemEnter2.append("path")
-      .attr("d", d3.symbol().type(d3.symbolDiamond).size(100))
-      .attr("transform", function(d) { 
-        var x = toolAxis('snapshot')
-        return "translate(" + x(d.snapshot) + "," + (height - (height/2) - 20) + ")"; })
-      // .attr("cx", function (d) {
-      //   var x = toolAxis('snapshot')
-      //   return x(d.snapshot); } )
-      // .attr("cy", height - (height/2) - 50)
-      // // .attr("cy", function(d) {
-      // //   return -(d.total_tools) + 135})
-      // .attr("r", function (d) { return 7; } )
-      // .style("fill", "none")
-      .style("fill", function(d){
-        if (d.snapshot < class_avg("snapshot")){ 
-          return belowColorScale("snapshot", d.snapshot)}
-        else { return aboveColorScale("snapshot", d.snapshot)}})
-      .style("opacity", 1)
-      // .attr('stroke-width', 4)
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-
-  var node3 = tools_used_NEW.svg.append("g")
-    .selectAll("circle")
-    .data(data[0])
-
-  var elemEnter3 = node3.enter()
-    .append("g")
-
-  tools_used_NEW.dot3 = elemEnter3.append("rect")
-      .attr("x", function (d) {
-        var x = toolAxis('rotate_view')
-        return x(d.rotate_view); } )
-      .attr("y", height - 100)
-      .attr("width", function (d) { return 3; } )
-      .attr("height", function (d) { return 45; } )
-      // .style("fill", "none")
-      .style("fill", function(d){
-        if (d.rotate_view < class_avg("rotate_view")){ 
-          return belowColorScale("rotate_view", d.rotate_view)}
-        else { return aboveColorScale("rotate_view", d.rotate_view)}})
-      .style("opacity", 1)
-      // .attr("stroke-width", 4)
-      // .attr("stroke", "black")
-      //grey out non-clicked
-      .on("click", function(d){
-        if (circle_clicked == false){
-          highlightStudent(data[0], d);
-          circle_clicked = true;
-        } else {
-            circle_clicked = false;
-            unhighlightStudent(data[1], d);
-          }
-        });
-  return tools_used_NEW
-}
-
-function initToolsUsed(data, tool) {
-  if (tool == null) {
-    tool = "rotate_view"
+  function class_avg(tool) {
+      return ((data[0].reduce(function (total, user){
+      return total + user[tool]}, 0)) / data[0].length)
   }
 
-  var margin = {top: 50, right:10, bottom: 100, left: 0},
-    width = 400 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+  function getPercentageChange(avg, student){
+    var sign;
+    var difference = avg - student;
+    var percentChange = (difference / ((avg + student) / 2)) * 100;
 
-  d3.select("#tools_used").selectAll("*").remove();
+    if (Math.sign(percentChange) == 1)
+      sign = "less"
+    else
+      sign = "more"
 
-  //allocate space for viz
-  var tools_used = d3.select("#tools_used");
-
-  tools_used.svg = tools_used.append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-
-  switch (tool){
-    case "rotate_view": 
-      tools_used.myScale = d3.scaleLinear()
-        .domain([0, 50])
-        .range([0, 50]);
-      break;
-    case "snapshot": 
-      tools_used.myScale = d3.scaleLinear()
-        .domain([0, 20])
-        .range([0, 50]);
+    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
   }
 
-  data.forEach(function(d){
-    d.n_rotate_view = d.data.reduce(function (total, attempt){
-                      return total + attempt.n_rotate_view}, 0)
-
-    d.n_snapshot = d.data.reduce(function (total, attempt){
-                      return total + attempt.n_snapshot}, 0)
-
-    d.active_time = d.data.reduce(function (total, attempt){
-                      return total + attempt.active_time}, 0)
-
-    d.num_attempts = d.data.length
-
-    d.rotate_view = (d.n_rotate_view / d.num_attempts)
-    d.snapshot = (d.n_snapshot / d.num_attempts)
-
-  })
-
-  var class_avg = 60 * (data.reduce(function (total, user){
-    return total + user[tool]}, 0) / data.length)
+  function change(user, tool) {
+    var change = getPercentageChange(class_avg(tool), (user[tool]))
+    return (change.PC + "% " + change.sign)
+  }
 
   var Tooltip = d3.select("#tools_used")
     .append("div")
@@ -580,7 +203,7 @@ function initToolsUsed(data, tool) {
     .style("border-radius", "5px")
     .style("padding", "5px")
     .style("height", "45px")
-    .style("width", "220px")
+    .style("width", "200px")
 
   var mouseover = function(d) {
     Tooltip
@@ -588,13 +211,7 @@ function initToolsUsed(data, tool) {
     d3.select(this)
       .style("stroke", "black")
   }
-  var mousemove = function(d) {
-    var change = getPercentageChange(class_avg, (60 * d[tool]))
-    Tooltip
-      .html(d.user + " used the " + tool + " tool " + change.PC + "% " + change.sign + " than your average student")
-      .style("left", (d3.mouse(this)[0]+30) + "px")
-      .style("top", (d3.mouse(this)[1]+50) + "px")
-  }
+
   var mouseleave = function(d) {
     Tooltip
       .style("opacity", 0)
@@ -602,110 +219,131 @@ function initToolsUsed(data, tool) {
       .style("stroke", "none")
   }
 
-  var node = tools_used.svg.append("g")
-    .selectAll("circle")
-    .data(data)
-
-  var elemEnter = node.enter()
-    .append("g")
-
   var circle_clicked = false;
 
-  tools_used.circle = elemEnter.append("circle")
-      .attr("r", function(d){
-            return tools_used.myScale(d[tool])
-          })
-      .attr("cx", width / 2)
-      .attr("cy", height / 2)
+  //CHECK SOLUTIONS
+  var node = tools_used.svg.append("g")
+    .selectAll("dot")
+    .data(data[0]).enter()
+    .append("g")
+
+  tools_used.dot = node.append("path")
+      .attr("d", d3.symbol().type(d3.symbolDiamond).size(200))
+      .attr("transform", function(d) { 
+        var x = toolAxis('submits')
+        return "translate(" + x(d.submits) + "," + 15 + ")"; })
+      
+      //fill based on relationship to the mean
       .style("fill", function(d){
-        switch(d.data[d.data.length - 1].persistenceAcrossAttempts){
-          case "LESS_PERSISTANCE_THAN_NORMAL": return "#33FF33"
-          case "NORMAL_PERSISTANCE": return "#00CC00"
-          case "MORE_PERSISTANCE_THAN_NORMAL": return "#006600"
-        }
-      })
-      .style("fill-opacity", .7)
-      .call(d3.drag() // call specific function when circle is dragged
-             .on("start", dragstarted)
-             .on("drag", dragged)
-             .on("end", dragended))
-      .on("mouseover", mouseover)
-      .on("mousemove", mousemove)
-      .on("mouseleave", mouseleave)
+        if (d.submits < class_avg("submits")){ 
+          return belowColorScale("submits", d.submits)}
+        else { return aboveColorScale("submits", d.submits)}})
+      .style("opacity", .7)
 
       //grey out non-clicked
       .on("click", function(d){
         if (circle_clicked == false){
-          highlightStudent(data, d);
+          highlightStudent(data[0], d);
           circle_clicked = true;
         } else {
             circle_clicked = false;
-            unhighlightStudent(data, d);
+            unhighlightStudent(data[1], d);
           }
-        });
+        })
+      .on("mouseover", mouseover)
+      .on("mousemove", function(d){
+        Tooltip
+        .html(d.user + " used this tool " + d["submits"].toFixed(2) + " times per puzzle, " + change(d, "submits") + " than average.")
+        .style("left", (d3.mouse(this)[0] + 90) + "px")
+        .style("top", (d3.mouse(this)[1] + 25) + "px")
+      })
+      .on("mouseleave", mouseleave);
 
-  var text = elemEnter.append("text")
-      .attr("dx", function(d){return 100})
-      .text(function(d){return d.user})
+  //SNAPSHOT
+  var node2 = tools_used.svg.append("g")
+    .selectAll("dot")
+    .data(data[0]).enter()
+    .append("g")
 
-  var simulation = d3.forceSimulation()
-    .force("center", d3.forceCenter().x(width / 2).y(height / 2)) // Attraction to the center of the svg area
-    .force("charge", d3.forceManyBody().strength(.1)) // Nodes are attracted one each other of value is > 0
-    .force("collide", d3.forceCollide().strength(.2).radius(function(d){return tools_used.myScale(d[tool]) + 5}).iterations(1)) // Force that avoids circle overlapping
+  tools_used.dot2 = node2.append("path")
+      .attr("d", d3.symbol().type(d3.symbolDiamond).size(200))
+      .attr("transform", function(d) { 
+        var x = toolAxis('snapshot')
+        return "translate(" + x(d.snapshot) + "," + (height - (height/2) - 20) + ")"; })
+      
+      //fill based on relationship to the mean
+      .style("fill", function(d){
+        if (d.snapshot < class_avg("snapshot")){ 
+          return belowColorScale("snapshot", d.snapshot)}
+        else { return aboveColorScale("snapshot", d.snapshot)}})
+      .style("opacity", .8)
 
-    // Apply these forces to the nodes and update their positions.
-    // Once the force algorithm is happy with positions ('alpha' value is low enough), simulations will stop.
-    simulation
-      .nodes(data)
-      .on("tick", function(d){
-        tools_used.circle
-            .attr("cx", function(d){ return d.x; })
-            .attr("cy", function(d){ return d.y; })
-        text
-          .attr("dx", function(d){ return d.x - 10; })
-          .attr("dy", function(d){ return d.y; })
-          .attr("font-size", "8px")
-      });
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(data[0], d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(data[1], d);
+          }
+        })
+      .on("mouseover", mouseover)
+      .on("mousemove", function(d){
+        Tooltip
+        .html(d.user + " used this tool " + d["snapshot"].toFixed(2) + " times per puzzle, " + change(d, "snapshot") + " than average.")
+        .style("left", (d3.mouse(this)[0] + 90) + "px")
+        .style("top", (d3.mouse(this)[1] + 150) + "px")
+      })
+      .on("mouseleave", mouseleave);
 
-  function dragstarted(d) {
-      if (!d3.event.active) simulation.alphaTarget(.03).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-  }
+  //ROTATE VIEW
+  var node3 = tools_used.svg.append("g")
+    .selectAll("circle")
+    .data(data[0]).enter()
+    .append("g")
 
-  function dragged(d) {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
-  }
+  tools_used.dot3 = node3.append("path")
+      .attr("d", d3.symbol().type(d3.symbolDiamond).size(200))
+      .attr("transform", function(d) { 
+        var x = toolAxis('rotate_view')
+        return "translate(" + x(d.rotate_view) + "," + (height - 75) + ")"; })
 
-  function dragended(d) {
-      if (!d3.event.active) simulation.alphaTarget(.03);
-      d.fx = null;
-      d.fy = null;
-  }
+      //fill based on relationship to the mean
+      .style("fill", function(d){
+        if (d.rotate_view < class_avg("rotate_view")){ 
+          return belowColorScale("rotate_view", d.rotate_view)}
+        else { return aboveColorScale("rotate_view", d.rotate_view)}})
+      .style("opacity", 1)
 
-  function getPercentageChange(avg, student){
-    var sign;
-    var decreaseValue = avg - student;
-    var percentChange = (decreaseValue / ((avg + student) / 2)) * 100;
+      //grey out non-clicked
+      .on("click", function(d){
+        if (circle_clicked == false){
+          highlightStudent(data[0], d);
+          circle_clicked = true;
+        } else {
+            circle_clicked = false;
+            unhighlightStudent(data[1], d);
+          }
+        })
+      .on("mouseover", mouseover)
+      .on("mousemove", function(d){
+        Tooltip
+        .html(d.user + " used this tool " + d["rotate_view"].toFixed(2) + " times per puzzle, " + change(d, "rotate_view") + " than average.")
+        .style("left", (d3.mouse(this)[0] + 90) + "px")
+        .style("top", (d3.mouse(this)[1] + 275) + "px")
+      })
+      .on("mouseleave", mouseleave);
 
-    if (Math.sign(percentChange) == 1)
-      sign = "less"
-    else
-      sign = "more"
-
-    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
-  }
-
-  return tools_used;
+  return tools_used
 }
 
 function initActiveTime(data) {
 
-  var active_link = "0"; //to control legend selections and hover
-  var legendClicked; //to control legend selections
+  var active_link = "0"; //legend selections and hover
+  var legendClicked; //legend selections
   var legendClassArray = []; //store legend classes to select bars in plotSingle()
-  var legendClassArray_orig = []; //orig (with spaces)
+  var legendClassArray_orig = [];
   var sortDescending; //if true, bars are sorted by height in descending order
   var restoreXFlag = false; //restore order of bars back to original
 
@@ -727,18 +365,14 @@ function initActiveTime(data) {
 
   d3.select(".detail").on("change", changeVis)
 
-  function changeVis() {
-    
-    activeTime = initActiveTime(data);
-
-  } 
+  function changeVis() { activeTime = initActiveTime(data); } 
 
   //add patterns for detail vis
   active_time = addPatterns(active_time);
 
   var info = getVisInfo();
 
-  //create bar chart data
+  //create bar chart data given detail selection
   data[0].forEach(function(d) {
     var user = d.user; //add to stock code
     var y0 = 0;
@@ -771,8 +405,6 @@ function initActiveTime(data) {
   var x = d3.scaleBand()
     .rangeRound([0, width])
     .padding(.15)
-  // vis.x = d3.scaleOrdinal()
-  //   .rangeRoundBands([0, vis.width], .2);
 
   var y = d3.scaleLinear()
     .rangeRound([height, 0]);
@@ -789,14 +421,10 @@ function initActiveTime(data) {
       var hrs = ~~(d / 3600);
       var mins = ~~((d % 3600) / 60);
       var secs = ~~d % 60;
-
-      // Output like "1:01" or "4:03:59" or "123:03:59"
       var ret = "";
-
       if (hrs > 0) {
           ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
       }
-
       ret += "" + mins + ":" + (secs < 10 ? "0" : "");
       ret += "" + secs;
       return ret;
@@ -1142,7 +770,7 @@ function initFailedAttempts(data) {
 
   d3.select("#failed_attempts").selectAll("*").remove();
 
-  //allocate space for viz
+  //allocate space for scatterplot
   var failed_attempts = d3.select("#failed_attempts");
 
   failed_attempts.svg = failed_attempts.append("svg")
@@ -1153,8 +781,6 @@ function initFailedAttempts(data) {
           "translate(" + margin.left + "," + margin.top + ")");
 
     var max_failed = d3.max(data[0], function(d) { return d.num_failed_att; })
-    var max_puzz = d3.max(data[0], function(d) { return d.num_failed_puzz; })
-    var max_reattemptsAF = d3.max(data[0], function(d) { return d.reattempts_AF; })
 
     var x = d3.scaleLinear()
     .domain([0, 100])
@@ -1168,7 +794,6 @@ function initFailedAttempts(data) {
     .range([ height, 0]);
     failed_attempts.svg.append("g")
     .call(d3.axisLeft(y));
-
 
     var Tooltip = d3.select("#failed_attempts")
       .append("div")
@@ -1216,16 +841,15 @@ function initFailedAttempts(data) {
         .style("stroke", "none")
     }
 
+    var circle_clicked = false;
+
     var node = failed_attempts.svg.append('g')
       .selectAll("dot")
       .data(data[0])
       .enter()
 
-    var circle_clicked = false;
-
     failed_attempts.circle = node.append("circle")
       .attr("cx", function (d) { 
-
         if (d.num_failed_att == 0)
           return x(0)
         else
@@ -1278,7 +902,7 @@ function initFailedAttemptsMap(data) {
 
   d3.select("#failed_attemptsMAP").selectAll("*").remove();
 
-  //allocate space for viz
+  //allocate space for heatmap viz
   var failed_attempts_map = d3.select("#failed_attemptsMAP");
 
   failed_attempts_map.svg = failed_attempts_map.append("svg")
@@ -1287,9 +911,6 @@ function initFailedAttemptsMap(data) {
       .append("g")
       .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
-
-  // var difficulty = [1, 2, 3]
-  // var number = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
   var x = d3.scaleBand()
     .range([ 0, width ])
@@ -1454,9 +1075,10 @@ function highlightStudent(data, d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:" + d.user
     
-  // highlight in reattempts viz
+  // highlight heatmap in reattempts viz
   initFailedAttemptsMap(d.byPuzzle)
 
+  //highlight scatterplot in reattempts viz
   var reattempt_circle_array = failedAttempts.circle._groups[0];
   
   for (var i = reattempt_circle_array.length - 1; i >= 0; i--) {
@@ -1466,36 +1088,16 @@ function highlightStudent(data, d) {
     }
   }
 
-  function class_avg(tool) {
-    
-    return 60 * (data.reduce(function (total, user){
-      return total + user[tool]}, 0) / data.length)
-  }
-
-  function getPercentageChange(avg, student){
-    var sign;
-    var decreaseValue = avg - student;
-    var percentChange = (decreaseValue / ((avg + student) / 2)) * 100;
-
-    if (Math.sign(percentChange) == 1)
-      sign = "less"
-    else
-      sign = "more"
-
-    return {PC: (Math.round(Math.abs(percentChange))), sign: sign} ;
-  }
-
-  function change(tool) {
-    var change = getPercentageChange(class_avg(tool), (60 * d[tool]))
-    return (change.PC + "% " + change.sign)
-  }
-
-  //highlight in tools used NEW
+  //highlight in tools used viz
   var dot_array = toolsUsedNEW.dot._groups[0];
+  var dot2_array = toolsUsedNEW.dot2._groups[0];
+  var dot3_array = toolsUsedNEW.dot3._groups[0];
+
   var tool1;
   var tool2;
   var tool3;
 
+  //CHECK SOLUTIONS
   for (var i = dot_array.length - 1; i >= 0; i--) {
     if (dot_array[i].__data__ != d) {
       d3.select(dot_array[i])
@@ -1507,15 +1109,7 @@ function highlightStudent(data, d) {
     }
   }
 
-  toolsUsedNEW.svg.append("text")
-    .attr("class", "tool_highlight label")
-    .attr("text-anchor", "end")
-    .attr("x", 270)
-    .attr("y", -10)
-    .html(Math.round(tool1.__data__.submits) + " check solutions per puzzle, " + change("submits") + " than average.");
-
-  var dot2_array = toolsUsedNEW.dot2._groups[0];
-
+  //SNAPSHOT
   for (var i = dot2_array.length - 1; i >= 0; i--) {
     if (dot2_array[i].__data__ != d) {
       d3.select(dot2_array[i])
@@ -1527,16 +1121,7 @@ function highlightStudent(data, d) {
     }
   }
 
-  toolsUsedNEW.svg.append("text")
-    .attr("class", "tool_highlight label")
-    .attr("text-anchor", "end")
-    .attr("x", 250)
-    .attr("y", 120)
-    .html(Math.round(tool2.__data__.snapshot) + " snapshots per puzzle, " + change("snapshot") + " than average.");
-
-
-  var dot3_array = toolsUsedNEW.dot3._groups[0];
-
+  //ROTATE VIEW
   for (var i = dot3_array.length - 1; i >= 0; i--) {
     if (dot3_array[i].__data__ != d) {
       d3.select(dot3_array[i])
@@ -1547,23 +1132,6 @@ function highlightStudent(data, d) {
         .style("opacity", 1)
     }
   }
-
-  toolsUsedNEW.svg.append("text")
-    .attr("class", "tool_highlight label")
-    .attr("text-anchor", "end")
-    .attr("x", 250)
-    .attr("y", 225)
-    .html(Math.round(tool3.__data__.rotate_view) + " rotate views per puzzle, " + change("rotate_view") + " than average.");
-
-  //highlight in circles
-  // var circle_array = toolsUsed.circle._groups[0];
-
-  // for (var i = circle_array.length - 1; i >= 0; i--) {
-  //   if (circle_array[i].__data__ != d) {
-  //     d3.select(circle_array[i])
-  //       .style("opacity", .1)
-  //   }
-  // }
 
   //highlight in bar chart
   var bar_array = activeTime.user._groups[0];
@@ -1579,7 +1147,7 @@ function highlightStudent(data, d) {
 function unhighlightStudent(data, d) {
 
   document.getElementById("student_highlight").innerHTML = "Student selected:<br>"
-  d3.select("#tools_used_NEW").selectAll(".tool_highlight").remove();
+  d3.select("#tools_used").selectAll(".tool_highlight").remove();
 
   var reattempt_circle_array = failedAttempts.circle._groups[0];
   
@@ -1609,13 +1177,6 @@ function unhighlightStudent(data, d) {
         .style("opacity", 1)
   }
 
-  // var circle_array = toolsUsed.circle._groups[0];
-
-  // for (var i = circle_array.length - 1; i >= 0; i--) {
-  //   d3.select(circle_array[i])
-  //     .style("opacity", 1)
-  // }
-
   var bar_array = activeTime.user._groups[0];
 
   for (var i = bar_array.length - 1; i >= 0; i--) {
@@ -1623,14 +1184,3 @@ function unhighlightStudent(data, d) {
       .style("opacity", 1)
   }
 }
-
-// function highlightStudentMap(d) {
-
-// failedAttemptsMap.svg.remove('*')
-
-// }
-
-// function unhighlightStudentMap(d) {
-
-//   failedAttemptsMap = initFailedAttemptsMap(data)
-// }
